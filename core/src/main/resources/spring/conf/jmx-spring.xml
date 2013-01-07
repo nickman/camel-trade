@@ -38,6 +38,38 @@
 
 	<bean id="MBeanServer" class="org.tradex.jmx.JMXHelper" factory-method="getHeliosMBeanServer" />
 	
+	<bean id="MBeanServerJMXUrl" class="javax.management.remote.JMXServiceURL"
+		lazy-init="false" depends-on="systemProperties" >
+		<constructor-arg type="java.lang.String"
+			value="service:jmx:rmi://localhost:7002/jndi/rmi://localhost:7005/jmxrmi" />
+	</bean>
+	
+	<bean id="RMIRegistry" class="java.rmi.registry.LocateRegistry"
+		lazy-init="false" factory-method="createRegistry" >
+		<constructor-arg value="7005" />
+	</bean>
+	
+	<bean id="MBeanServerConnector" class="javax.management.remote.JMXConnectorServerFactory"
+		lazy-init="false" init-method="start" factory-method="newJMXConnectorServer"
+		depends-on="RMIRegistry">
+		<constructor-arg ref="MBeanServerJMXUrl" />
+		<constructor-arg>
+			<map />
+		</constructor-arg>
+		<constructor-arg ref="MBeanServer" />
+	</bean>
+	
+	<bean id="JMXRemotingExporter" class="org.springframework.jmx.export.MBeanExporter">
+		<property name="beans">
+			<map>
+				<entry key="org.tradex.jmx:service=JMXConnectorServer,protocol=rmi" value-ref="MBeanServerConnector" />				
+			</map>
+		</property>
+		<property name="server" ref="MBeanServer" />
+	</bean>	
+	
+	
+	
 	<!-- 
 	<bean id="rmiRegistryLoaded" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean" depends-on="RMIRegistry">
     	<property name="targetObject" value="#{@systemProperties}" />

@@ -2,7 +2,7 @@
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
 "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
 <hibernate-mapping  >
-    <class name="test.org.tradex.domain.TradeCSV" table="TRADE" schema="PUBLIC"  >
+    <class name="org.tradex.domain.trade.TradeCSV" table="TRADE" schema="PUBLIC"  >
         <id name="orderId" type="string">
             <column name="ORDER_ID" />
         </id>

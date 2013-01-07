@@ -32,17 +32,17 @@ import org.apache.log4j.Logger;
 import org.tradex.tx.TXStatus;
 import org.tradex.tx.TransactionHelper;
 
-import test.org.tradex.domain.ITrade;
 
 /**
  * <p>Title: ObjectListUnwrapper</p>
- * <p>Description: </p> 
+ * <p>Description: A transformer to convert an array list of maps containing unmarshalled bindy objects into one aggregated iterable. </p> 
  * <p>Company: Helios Development Group LLC</p>
  * @author Whitehead (nwhitehead AT heliosdev DOT org)
  * <p><code>org.tradex.camel.split.ObjectListUnwrapper</code></p>
+ * @param <T> The expected object type unmarshalled by bindy
  */
 
-public class ObjectListUnwrapper {
+public class ObjectListUnwrapper<T> {
 	/** Instance logger */
 	protected final Logger log = Logger.getLogger(getClass());
 	
@@ -51,15 +51,16 @@ public class ObjectListUnwrapper {
 	 * @param list The list of maps from the exchange
 	 * @return A list of trades
 	 */
-	public List<ITrade> split(ArrayList<Map<Object, Object>> list) {
+	@SuppressWarnings("unchecked")
+	public List<T> split(ArrayList<Map<Object, Object>> list) {
 		log.info(dumpTxInfo());
-		ArrayList<ITrade> trades = new ArrayList<ITrade>(list.size()); 
+		ArrayList<T> splits = new ArrayList<T>(list.size()); 
 		for(Map<Object, Object> m: list) {
 			for(Object obj: m.values()) {
-				trades.add((ITrade)obj);
+				splits.add((T)obj);
 			}
 		}
-		return trades;
+		return splits;
 	}
 	
 	private String dumpTxInfo() {

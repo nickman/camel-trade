@@ -1,13 +1,13 @@
 import groovy.sql.*;
 import java.text.SimpleDateFormat;
 
-sql = Sql.newInstance( 'jdbc:h2:tcp://localhost:3083/mem:testdb', 'sa', '', 'org.h2.Driver');
+sql = Sql.newInstance( 'jdbc:h2:tcp://localhost:4083/mem:testdb', 'sa', '', 'org.h2.Driver');
 conn = sql.getConnection();
 println "Connected to ${conn.getMetaData().getURL()}";
 
 df = new SimpleDateFormat("dd MMM yyyy");
 
-dataFile = new File("/home/nwhitehead/hprojects/camel-trade/core/src/test/resources/data/isins.txt");
+dataFile = new File("/home/nwhitehead/hprojects/camel-trade/core/src/test/resources/data/isins-gb000.txt");
 int maxName = 0;
 int col = 2;
 Object[] frags = new Object[11];

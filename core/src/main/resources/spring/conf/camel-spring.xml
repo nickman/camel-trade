@@ -32,7 +32,15 @@
 	    <property name="includes" value="*trades*.csv,*trades*.txt"/>
 	    <!-- exclude all files with bad in name or .xml files. Use comma to seperate multiple excludes -->
 	    <property name="excludes" value="**/*bad*"/>
+	</bean>
+	
+	<bean id="IsinImportAntFilter" class="org.apache.camel.component.file.AntPathMatcherGenericFileFilter">
+	    <!-- include and file in the subfolder that has day in the name -->
+	    <property name="includes" value="isins*.txt"/>
+	    <!-- exclude all files with bad in name or .xml files. Use comma to seperate multiple excludes -->
+	    <property name="excludes" value="**/*bad*"/>
 	</bean>	
+		
 	
 	  
 	<bean name="fileImportIdempotentRepository" class="org.tradex.camel.idempotent.JmxNamedJdbcMessageIdRepository">
@@ -41,9 +49,23 @@
 		<property name="objectName" value="org.tradex:service=FileImportIdempotentRepository" />		
 	</bean>
 	
-	<bean id="bindyDataformat" class="org.apache.camel.dataformat.bindy.csv.BindyCsvDataFormat">
-		<constructor-arg value="test.org.tradex.domain" />
+	<bean name="IsinImportIdempotentRepository" class="org.tradex.camel.idempotent.JmxNamedJdbcMessageIdRepository">
+		<constructor-arg ref="primaryDataSource" />
+		<constructor-arg value="IsinFileImportProcessor" />
+		<property name="objectName" value="org.tradex:service=IsinImportIdempotentRepository" />		
 	</bean>
+	
+	
+	<bean id="TradexCSVFormat" class="org.apache.camel.dataformat.bindy.csv.BindyCsvDataFormat">
+		<constructor-arg value="org.tradex.domain.trade" />
+	</bean>
+	
+	<bean id="IsinCSVFormat" class="org.apache.camel.dataformat.bindy.csv.BindyCsvDataFormat">
+		<constructor-arg value="org.tradex.domain.isin" />
+	</bean>
+	
+	<bean id="TradeValidator" class="org.tradex.validation.TradeImportValidation" />
+	
 	
 	<bean id="requiredTx" class="org.apache.camel.spring.spi.SpringTransactionPolicy">
 		<property name="transactionManager" ref="transactionManager"/>
@@ -54,36 +76,52 @@
     	<property name="sessionFactory" ref="sessionFactory"/>
   	</bean>	
 	
+	 
+	
 
 	<camelContext xmlns="http://camel.apache.org/schema/spring" trace="false" id="TradexContext" autoStartup="true"  >			
+		<camel:errorHandler id="TradexImportErrorHandler" >
+			<camel:redeliveryPolicy maximumRedeliveries="5" maximumRedeliveryDelay="15000" retryAttemptedLogLevel="WARN" retriesExhaustedLogLevel="ERROR" />
+		</camel:errorHandler>
+
 		<camel:threadPoolProfile id="FileImportThreadPool" poolSize="5"  maxPoolSize="10" maxQueueSize="1000" >
 			<camel:description>Trade Import Thread Pool</camel:description>
 		</camel:threadPoolProfile>
+		<camel:endpoint id="TradexHibernate" uri="hibernate://tradex" />
+		
 				
 		<route autoStartup="true" id="TradeImport">
+			
 			<from uri="file:/tmp/tradein?idempotent=true&amp;filter=#FileImportAntFilter&amp;idempotentRepository=#fileImportIdempotentRepository&amp;delay=5000&amp;move=.done">			
-				<camel:description>Trade Import File Poller</camel:description>
+				<camel:description>Trade Import File Poller</camel:description>				
 			</from>			
+			
 			<camel:transacted id="FileImporterTransaction" ref="requiredTx" />
-			<unmarshal id="TradeImportUnmarshaller" ref="bindyDataformat" />
+			<unmarshal id="TradeImportUnmarshaller" ref="TradexCSVFormat" />
 
-			<!-- 
-			<camel:to id="TradeImportLogger" uri="log:test.org.tradex.domain?level=INFO&amp;showAll=true&amp;multiline=true" />
-			<camel:to id="TradeImportHibernate" uri="hibernate://test.org.tradex.domain.TradeCSV" />
-			-->
 			
 		    <camel:to id="TradeImportLogger" uri="log:test.org.tradex.domain?level=INFO&amp;showAll=true&amp;multiline=true" />
 			<camel:split streaming="true" id="TradeImportSplit">
 				<camel:method bean="olu" method="split" id="TradeImportSplitter" />
-				<camel:to id="TradeImportHibernate" uri="hibernate://trade" />
+				<camel:bean id="TradeValidation"  ref="TradeValidator" method="validateTrade"  />				
+				<camel:to ref="TradexHibernate" />
 			</camel:split>
-			
-			
-			
 		</route>
 		
-		
-		
+		<route autoStartup="true" id="IsinImport">
+			<from uri="file:/tmp/isinsin?idempotent=true&amp;filter=#IsinImportAntFilter&amp;idempotentRepository=#IsinImportIdempotentRepository&amp;delay=5000&amp;initialDelay=0&amp;move=.done">			
+				<camel:description>Isin Import File Poller</camel:description>
+			</from>			
+			
+			<camel:transacted id="IsiImporterTransaction" ref="requiredTx" />
+			<unmarshal id="IsiImportUnmarshaller" ref="IsinCSVFormat" />
+		    <camel:to id="IsinImportLogger" uri="log:test.org.tradex.domain?level=INFO&amp;showAll=true&amp;multiline=true" />
+			<camel:split streaming="true" id="IsinImportSplit">
+				<camel:method bean="olu" method="split" id="IsinImportSplitter" />
+				<camel:to ref="TradexHibernate" />
+			</camel:split>
+			
+		</route>
 		
 	</camelContext>
 	

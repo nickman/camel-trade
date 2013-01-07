@@ -1,4 +1,4 @@
-package test.org.tradex.domain;
+package org.tradex.domain.trade;
 
 import java.math.BigDecimal;
 import java.util.Date;

@@ -3,13 +3,18 @@ import java.text.SimpleDateFormat;
 import groovy.sql.*;
 
 
-sql = Sql.newInstance( 'jdbc:h2:tcp://localhost:3083/mem:testdb', 'sa', '', 'org.h2.Driver');
+sql = Sql.newInstance( 'jdbc:h2:tcp://localhost:4083/mem:testdb', 'sa', '', 'org.h2.Driver');
 conn = sql.getConnection();
 println "Connected to ${conn.getMetaData().getURL()}";
 
 types = ['BUY', 'SELL'] as String[];
-isins = ['US0378331005', 'AU0000XVGZA3', 'GB0002634946'] as String[];
 
+
+isins = [];
+sql.eachRow("SELECT ISIN from ISIN",  {
+    isins.add(it.ISIN);
+});
+isinCount = isins.size();
 df = new SimpleDateFormat("yyyy/MM/dd");
 dt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 r = {max -> return Math.abs(random.nextInt(max));}
@@ -29,7 +34,7 @@ for(x in 0..100) {
         for(i in 0..100) {
             b = new StringBuilder();
             b.append(tradeId.incrementAndGet()).append(",");
-            b.append(isins[r(3)]).append(",");
+            b.append(isins[r(isinCount)]).append(",");
             b.append(orderId.incrementAndGet()).append("-${fileId},");
             priceStr = "${r(1000000)}.${r(99)}";
             price = new BigDecimal(priceStr);

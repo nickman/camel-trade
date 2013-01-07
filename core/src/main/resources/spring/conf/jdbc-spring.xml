@@ -15,15 +15,15 @@
 	  	
 	    <bean id="H2WebServer" class="org.h2.tools.Server"
 	        factory-method="createWebServer" init-method="start">
-	        <constructor-arg value="-web,-webAllowOthers,-webPort,3082" />
+	        <constructor-arg value="-web,-webAllowOthers,-webPort,4082" />
 	    </bean>
 	    <bean id="H2TCPServer" class="org.h2.tools.Server"
 	        factory-method="createTcpServer" init-method="start">
-	        <constructor-arg value="-tcp,-tcpAllowOthers,-tcpPort,3083" />
+	        <constructor-arg value="-tcp,-tcpAllowOthers,-tcpPort,4083" />
 	    </bean>	   
 	    
 		<!-- 
-			To connect remotely:   jdbc:h2:mem:testdb
+			To connect remotely:   jdbc:h2:tcp://localhost:4083/mem:testdb
 		 -->
 	    	   
 	    	    
@@ -72,6 +72,7 @@
 		<constructor-arg ref="primaryDataSourceH2" />
 		<constructor-arg value="RUNSCRIPT FROM './src/main/resources/spring/conf/run-schema.sql'" />
 	</bean>
+	
 	
 	
 	

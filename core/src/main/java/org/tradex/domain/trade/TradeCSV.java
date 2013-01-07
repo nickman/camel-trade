@@ -1,5 +1,5 @@
 
-package test.org.tradex.domain;
+package org.tradex.domain.trade;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -40,7 +40,7 @@ public class TradeCSV implements ITrade {
 	
 	/**
 	 * {@inheritDoc}
-	 * @see test.org.tradex.domain.ITrade#getTradeId()
+	 * @see org.tradex.domain.trade.ITrade#getTradeId()
 	 */
 	@Override
 	public long getTradeId() {		
@@ -49,7 +49,7 @@ public class TradeCSV implements ITrade {
 
 	/**
 	 * {@inheritDoc}
-	 * @see test.org.tradex.domain.ITrade#getIsin()
+	 * @see org.tradex.domain.trade.ITrade#getIsin()
 	 */
 	@Override
 	public String getIsin() {
@@ -58,7 +58,7 @@ public class TradeCSV implements ITrade {
 
 	/**
 	 * {@inheritDoc}
-	 * @see test.org.tradex.domain.ITrade#getBusinessDay()
+	 * @see org.tradex.domain.trade.ITrade#getBusinessDay()
 	 */
 	@Override
 	public Date getBusinessDay() {
@@ -67,7 +67,7 @@ public class TradeCSV implements ITrade {
 
 	/**
 	 * {@inheritDoc}
-	 * @see test.org.tradex.domain.ITrade#getSendingTime()
+	 * @see org.tradex.domain.trade.ITrade#getSendingTime()
 	 */
 	@Override
 	public Date getSendingTime() {
@@ -76,7 +76,7 @@ public class TradeCSV implements ITrade {
 
 	/**
 	 * {@inheritDoc}
-	 * @see test.org.tradex.domain.ITrade#getType()
+	 * @see org.tradex.domain.trade.ITrade#getType()
 	 */
 	@Override
 	public String getType() {
@@ -85,7 +85,7 @@ public class TradeCSV implements ITrade {
 
 	/**
 	 * {@inheritDoc}
-	 * @see test.org.tradex.domain.ITrade#getOrderId()
+	 * @see org.tradex.domain.trade.ITrade#getOrderId()
 	 */
 	@Override
 	public String getOrderId() {
@@ -94,7 +94,7 @@ public class TradeCSV implements ITrade {
 
 	/**
 	 * {@inheritDoc}
-	 * @see test.org.tradex.domain.ITrade#getPrice()
+	 * @see org.tradex.domain.trade.ITrade#getPrice()
 	 */
 	@Override
 	public BigDecimal getPrice() {

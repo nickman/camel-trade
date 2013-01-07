@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated Jan 7, 2013 10:51:32 AM by Hibernate Tools 3.4.0.CR1 -->
+<hibernate-mapping>
+    <class name="org.tradex.domain.isin.Isin" table="ISIN" schema="PUBLIC">
+        <id name="isin" type="string">
+            <column name="ISIN" length="12" />
+            <generator class="assigned" />
+        </id>
+        <property name="name" type="string">
+            <column name="NAME" length="40" not-null="true" />
+        </property>
+        <property name="commonCode" type="string">
+            <column name="COMMON_CODE" length="10" not-null="true" />
+        </property>
+        <property name="rate" type="big_decimal">
+            <column name="RATE" precision="65535" scale="32767" />
+        </property>
+        <property name="currency" type="string">
+            <column name="CURRENCY" length="5" not-null="true" />
+        </property>
+        <property name="closeDate" type="date">
+            <column name="CLOSE_DATE" length="8" />
+        </property>
+        <property name="nextCouponDate" type="date">
+            <column name="NEXT_COUPON_DATE" length="8" />
+        </property>
+        <property name="recordDate" type="date">
+            <column name="RECORD_DATE" length="8" />
+        </property>
+        <property name="market" type="char">
+            <column name="MARKET" length="1" not-null="true" />
+        </property>
+        <property name="instrument" type="string">
+            <column name="INSTRUMENT" length="12" not-null="true" />
+        </property>
+        <property name="lastUpdate" type="date">
+            <column name="LAST_UPDATE" length="8" not-null="true" />
+        </property>
+    </class>
+</hibernate-mapping>
