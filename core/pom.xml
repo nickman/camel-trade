@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>	
+	<parent>
+	    <groupId>org.apache.camel.trade</groupId>
+	    <artifactId>trade</artifactId>
+	    <version>1.0-SNAPSHOT</version>
+	</parent>
+	<groupId>org.apache.camel.trade</groupId>
+	<artifactId>core</artifactId>
+	<packaging>jar</packaging>
+	<version>1.0-SNAPSHOT</version>
+	<name>Apache Camel Trader - Core</name>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	</properties>
+	<dependencies>
+		<!--   
+		  =================================================================================
+		  Test Dependencies
+		  =================================================================================
+		-->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-test</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-test-spring</artifactId>
+		</dependency>
+		<!--   
+		  =================================================================================
+		  JBoss/Arjuna Transaction Manager
+		  =================================================================================
+		-->
+	      <dependency>
+			<groupId>org.jboss.jbossts.jta</groupId>
+			<artifactId>narayana-jta</artifactId>
+	      </dependency>
+	      
+	      <dependency>
+			<groupId>org.jboss.logging</groupId>
+			<artifactId>jboss-logging</artifactId>
+	      </dependency>
+	      
+
+		<!--   
+		  =================================================================================
+		  Logging Dependencies			  
+		  =================================================================================
+		-->
+
+		<dependency>
+		  <groupId>log4j</groupId>
+		  <artifactId>log4j</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+		</dependency>
+		
+	      
+		  
+		<!--   
+		  =================================================================================
+		  Spring Dependencies
+		  =================================================================================
+		-->
+		<dependency>
+		  <groupId>org.springframework</groupId>
+		  <artifactId>spring-core</artifactId>
+		</dependency>
+		
+		<dependency>
+		  <groupId>org.springframework</groupId>
+		  <artifactId>spring-jdbc</artifactId>
+		</dependency>
+		
+		<dependency>
+		  <groupId>org.springframework</groupId>
+		  <artifactId>spring-orm</artifactId>
+		</dependency>
+		
+		<dependency>
+		  <groupId>org.springframework</groupId>
+		  <artifactId>spring-jms</artifactId>
+		</dependency>
+
+		<dependency>
+		  <groupId>org.springframework</groupId>
+		  <artifactId>spring-beans</artifactId>
+		</dependency>
+
+		<dependency>
+		  <groupId>org.springframework</groupId>
+		  <artifactId>spring-context</artifactId>
+		</dependency>
+		
+		<dependency>
+		  <groupId>org.springframework</groupId>
+		  <artifactId>spring-context-support</artifactId>
+		</dependency>
+		
+		<dependency>
+		  <groupId>org.springframework</groupId>
+		  <artifactId>spring-tx</artifactId>
+		</dependency>
+
+		<dependency>
+		  <groupId>org.springframework</groupId>
+		  <artifactId>spring-expression</artifactId>
+		</dependency>
+		
+		<!--   
+		  =================================================================================
+		  Apache Camel Dependencies
+		  =================================================================================
+		-->
+		<dependency>
+		  <groupId>org.apache.camel</groupId>
+		  <artifactId>camel-bindy</artifactId>
+		</dependency>
+
+		<dependency>
+		  <groupId>org.apache.camel</groupId>
+		  <artifactId>camel-core</artifactId>
+		</dependency>
+
+		<dependency>
+		  <groupId>org.apache.camel</groupId>
+		  <artifactId>camel-spring</artifactId>
+		</dependency>
+		
+		<dependency>
+		  <groupId>org.apache.camel</groupId>
+		  <artifactId>camel-sql</artifactId>
+		</dependency>			
+
+		<dependency>
+		  <groupId>org.apache.camel</groupId>
+		  <artifactId>camel-ognl</artifactId>
+		</dependency>
+		
+		<dependency>
+		  <groupId>org.apache.camel</groupId>
+		  <artifactId>camel-jms</artifactId>
+		</dependency>
+
+		<dependency>
+		  <groupId>org.apache.camel</groupId>
+		  <artifactId>camel-gson</artifactId>
+		</dependency>
+
+		<dependency>
+		  <groupId>org.apache-extras.camel-extra</groupId>
+		  <artifactId>camel-hibernate</artifactId>
+		</dependency>
+		
+		<!--   
+		  =================================================================================
+		  Caching Dependencies
+		  =================================================================================
+		-->
+		<dependency>
+			<groupId>net.sf.ehcache</groupId>
+			<artifactId>ehcache-core</artifactId>
+		</dependency>
+		<!--   
+		  =================================================================================
+		  Jetty Dependencies
+		  =================================================================================
+		-->
+	      <dependency>
+		<groupId>org.eclipse.jetty.aggregate</groupId>
+		<artifactId>jetty-all-server</artifactId>
+	      </dependency>
+	      <dependency>
+		<groupId>javax.servlet</groupId>
+		<artifactId>javax.servlet-api</artifactId>
+	      </dependency>
+		<!--   
+		  =================================================================================
+		  Groovy Dependencies
+		  =================================================================================
+		-->
+		<dependency>
+		  <groupId>org.codehaus.groovy</groupId>
+		  <artifactId>groovy-all</artifactId>
+		</dependency>				
+
+		<!--   
+		  =================================================================================
+		  H2 DB Dependencies
+		  =================================================================================
+		-->
+		<dependency>
+		  <groupId>com.h2database</groupId>
+		  <artifactId>h2</artifactId>
+		</dependency>
+
+		<!--   
+		  =================================================================================
+		  DB Connection Pooling Dependencies
+		  =================================================================================
+		-->
+		<dependency>
+		  <groupId>commons-dbcp</groupId>
+		  <artifactId>commons-dbcp</artifactId>
+		</dependency>
+		
+		<dependency>
+		  <groupId>net.ju-n.commons-dbcp-jmx</groupId>
+		  <artifactId>commons-dbcp-jmx-jdbc4</artifactId>
+		</dependency>
+		
+
+
+		<!--   
+		  =================================================================================
+		  Hibernate Dependencies
+		  =================================================================================
+		-->
+		<dependency>
+		  <groupId>org.hibernate</groupId>
+		  <artifactId>hibernate-core</artifactId>
+		</dependency>
+		<dependency>
+		  <groupId>org.hibernate</groupId>
+		  <artifactId>hibernate-jmx</artifactId>
+		</dependency>
+		
+
+		<!--   
+		  =================================================================================
+		  JSON Dependencies
+		  =================================================================================
+		-->
+		<dependency>
+		  <groupId>com.google.code.gson</groupId>
+		  <artifactId>gson</artifactId>
+		</dependency>
+
+			<!--   
+			  =================================================================================
+			  JNDI Dependencies
+			  =================================================================================
+			-->
+			<dependency>
+			  <groupId>jboss</groupId>
+			  <artifactId>jnpserver</artifactId>
+			</dependency>
+			<dependency>
+			  <groupId>org.jboss</groupId>
+			  <artifactId>jboss-common-core</artifactId>
+			</dependency>
+		  
+		
+	</dependencies>
+</project>

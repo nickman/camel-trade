@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<util:properties id="jmxProperties" >
+		<prop key="javax.management.rmi.registry.port">2005</prop>
+		<!-- Comment to use the JBoss MBeanServer -->
+		<prop key="javax.management.builder.initial">javax.management.MBeanServerBuilder</prop>
+		<prop key="org.helios.jmx.domain">DefaultDomain</prop>
+		
+		<!-- Uncomment to use the JBoss MBeanServer -->
+		<!-- 
+		<prop key="javax.management.builder.initial">org.jboss.mx.server.MBeanServerBuilderImpl</prop>
+		<prop key="com.theice.jmx.domain">jboss</prop>
+		-->
+	</util:properties>
+	
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+	  <property name="properties" ref="jmxProperties"/>
+	</bean>	
+
+
+	<bean id="jbossJmxSystemPrereqs" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    	<property name="targetObject" value="#{@systemProperties}" />
+    	<property name="targetMethod" value="putAll" />
+    	<property name="arguments" ref="jmxProperties" />
+	</bean>
+
+
+
+	<bean id="MBeanServer" class="org.tradex.jmx.JMXHelper" factory-method="getHeliosMBeanServer" />
+	
+	<!-- 
+	<bean id="rmiRegistryLoaded" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean" depends-on="RMIRegistry">
+    	<property name="targetObject" value="#{@systemProperties}" />
+    	<property name="targetMethod" value="putAll" />
+    	<property name="arguments">
+    		<util:properties>
+    			<prop key="javax.management.rmi.registry.port.set">${javax.management.rmi.registry.port}</prop>
+    		</util:properties>
+    	</property>
+	</bean>
+	
+	<bean id="RMIRegistry" class="java.rmi.registry.LocateRegistry" factory-method="createRegistry"  >
+		<constructor-arg value="${javax.management.rmi.registry.port}" />
+	</bean>
+	
+	
+	<bean id="MBeanServerJMXUrl" class="javax.management.remote.JMXServiceURL">
+		<constructor-arg type="java.lang.String"
+			value="service:jmx:rmi:///jndi/rmi://localhost:${javax.management.rmi.registry.port}/jmxrmi" />
+	</bean>
+	
+	<bean id="MBeanServerConnector" class="javax.management.remote.JMXConnectorServerFactory"
+		lazy-init="false" init-method="start" destroy-method="stop"  factory-method="newJMXConnectorServer"
+		depends-on="RMIRegistry" > 
+		<constructor-arg ref="MBeanServerJMXUrl" />
+		<constructor-arg>
+			<map />
+		</constructor-arg>
+		<constructor-arg ref="MBeanServer" />
+	</bean>
+	
+	-->
+	
+
+	
+	<!-- 
+	<bean id="jmxAttributeSource"
+          class="org.springframework.jmx.export.annotation.AnnotationJmxAttributeSource"/>
+          
+	 <bean id="assembler"
+          class="org.springframework.jmx.export.assembler.MetadataMBeanInfoAssembler">
+        <property name="attributeSource" ref="jmxAttributeSource"/>
+    </bean>
+     -->
+	<context:mbean-export  registration="replaceExisting" server="MBeanServer" />
+    
+    
+    
+    
+	
+
+</beans>

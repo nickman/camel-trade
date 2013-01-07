@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping  >
+    <class name="test.org.tradex.domain.TradeCSV" table="TRADE" schema="PUBLIC"  >
+        <id name="orderId" type="string">
+            <column name="ORDER_ID" />
+        </id>
+        
+        <property name="tradeId" type="long" not-null="true">
+            <column name="TRADE_ID" />
+        </property>
+        
+        <property name="businessDay" type="date" not-null="true">
+            <column name="BUSINESS_DAY" />
+        </property>
+        
+        <property name="sendingTime" type="timestamp" not-null="true">
+            <column name="SENDING_TIME" />
+        </property>
+        
+        <property name="isin" type="string" length="30" not-null="true">
+            <column name="ISIN" />
+        </property>
+
+        <property name="type" type="string" length="5" not-null="true">
+            <column name="TYPE" />
+        </property>
+
+        <property name="price" type="java.math.BigDecimal" not-null="true">
+            <column name="PRICE" />
+        </property>
+	</class>
+    
+</hibernate-mapping>
+	

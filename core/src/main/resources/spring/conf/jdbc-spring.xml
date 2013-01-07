@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+	
+		  <!--  Uncomment to enable remote access to the in-memory test database -->
+	  
+	  	
+	    <bean id="H2WebServer" class="org.h2.tools.Server"
+	        factory-method="createWebServer" init-method="start">
+	        <constructor-arg value="-web,-webAllowOthers,-webPort,3082" />
+	    </bean>
+	    <bean id="H2TCPServer" class="org.h2.tools.Server"
+	        factory-method="createTcpServer" init-method="start">
+	        <constructor-arg value="-tcp,-tcpAllowOthers,-tcpPort,3083" />
+	    </bean>	   
+	    
+		<!-- 
+			To connect remotely:   jdbc:h2:mem:testdb
+		 -->
+	    	   
+	    	    
+	  
+	
+	<bean id="primaryDataSourceH2" class="org.h2.jdbcx.JdbcDataSource" >
+		<property name="uRL" value="jdbc:h2:mem:testdb;MODE=Oracle;DB_CLOSE_DELAY=-1;JMX=TRUE;TRACE_LEVEL_FILE=1" />
+		<property name="user" value="sa" />
+		<property name="password" value="" />
+		<property name="description" value="The primary data source" />
+	</bean>
+
+
+	<bean id="H2XAConnectionFactory" class="org.apache.commons.dbcp.managed.DataSourceXAConnectionFactory" >
+		<constructor-arg ref="jbossTransactionManager"/>
+		<constructor-arg ref="primaryDataSourceH2" />
+	</bean>
+	
+	<bean id="BasicManagedDataSource" class="org.apache.commons.dbcp.managed.BasicManagedDataSource" destroy-method="close" >
+		<property name="xaDataSourceInstance" ref="primaryDataSourceH2" />
+		<property name="transactionManager" ref="jbossTransactionManager" />
+	</bean>
+	
+	<bean id="JDBCPoolsJMXExporter" class="org.springframework.jmx.export.MBeanExporter">
+		<property name="beans">
+			<map>
+				<entry key="org.tradex.jdbc:service=TradexDataSource" value-ref="BasicManagedDataSource" />
+			</map>
+		</property>
+		<property name="server" ref="MBeanServer" />
+	</bean>	  
+	
+	
+	
+	
+	<bean id="primaryDataSource" class="org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy" >
+		<qualifier value="Default" />
+		<property name="targetDataSource" ref="BasicManagedDataSource" />
+		<property name="reobtainTransactionalConnections" value="true" />
+	</bean>
+	
+	
+	
+		
+	<bean id="dbInit" class="org.tradex.jdbc.JDBCHelper" factory-method="getInstance" destroy-method="killDb">
+		<constructor-arg ref="primaryDataSourceH2" />
+		<constructor-arg value="RUNSCRIPT FROM './src/main/resources/spring/conf/run-schema.sql'" />
+	</bean>
+	
+	
+	
+
+</beans>

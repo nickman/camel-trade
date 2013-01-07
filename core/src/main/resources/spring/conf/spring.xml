@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+	
+	<context:annotation-config/>
+	<import resource="jndi-spring.xml" />
+	<import resource="jmx-spring.xml" />
+	<import resource="jdbc-spring.xml" />
+	<import resource="tx-spring.xml" />	
+	<import resource="hibernate-spring.xml" />
+	<import resource="camel-spring.xml" />
+	
+	
+	<!-- <import resource="jms-spring.xml" />  -->				<!--  Comment this to test with MQ -->
+	<!-- <import resource="wmq-jms-spring.xml" /> -->	<!--  Uncomment this to test with MQ -->
+	
+	<!-- 
+	<bean id="systemPrereqs" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    	<property name="targetObject" value="#{@systemProperties}" />
+    	<property name="targetMethod" value="putAll" />
+    	<property name="arguments" ref="jndiProperties" />
+	</bean>
+	-->
+
+	
+	<bean id="BeanContextUtil"  class="org.tradex.spring.BeanContextUtil" />
+	
+	
+	
+	
+	<alias name="primaryJdbcTemplate" alias="eventJdbcTemplate" />   
+	
+	<bean id="primaryJdbcTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate" depends-on="dbInit">		
+		<constructor-arg ref="primaryDataSource" />
+		<property name="cacheLimit" value="128"/>
+	</bean>
+	
+	
+	
+	
+</beans>

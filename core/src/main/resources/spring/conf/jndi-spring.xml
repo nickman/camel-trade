@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+	
+	<util:properties id="jndiProperties" >
+		<prop key="java.naming.factory.initial">org.jnp.interfaces.NamingContextFactory</prop>
+		<prop key="java.naming.factory.url.pkgs">org.jboss.naming</prop>
+		<prop key="com.theice.jmx.domain">DefaultDomain</prop>
+	</util:properties>
+
+	<bean id="jndiServer" class="org.jnp.server.Main" init-method="start" destroy-method="stop" depends-on="jndiProperties" >
+		<constructor-arg value="org.jboss.naming.Naming" />
+		<property name="port" value="1099"/>
+		<property name="rmiPort" value="1098"/>
+		<property name="bindAddress" value="0.0.0.0"/>
+		<property name="rmiBindAddress" value="0.0.0.0"/>
+		<property name="namingInfo">
+			<bean id="NamingInfo" class="org.jnp.server.NamingBeanImpl" init-method="start" >
+				<property name="installGlobalService" value="true" />
+				<property name="useGlobalService" value="true" />
+			</bean>				
+		</property>
+	</bean>
+
+	
+	
+
+</beans>
