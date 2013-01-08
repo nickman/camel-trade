@@ -18,8 +18,8 @@
 
 	<bean id="jndiServer" class="org.jnp.server.Main" init-method="start" destroy-method="stop" depends-on="jndiProperties" >
 		<constructor-arg value="org.jboss.naming.Naming" />
-		<property name="port" value="1099"/>
-		<property name="rmiPort" value="1098"/>
+		<property name="port" value="41099"/>
+		<property name="rmiPort" value="41098"/>
 		<property name="bindAddress" value="0.0.0.0"/>
 		<property name="rmiBindAddress" value="0.0.0.0"/>
 		<property name="namingInfo">

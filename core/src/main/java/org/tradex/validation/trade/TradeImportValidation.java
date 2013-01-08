@@ -32,6 +32,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Handler;
 import org.apache.camel.Message;
 import org.apache.camel.api.management.ManagedAttribute;
+import org.apache.camel.api.management.ManagedResource;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +47,7 @@ import org.tradex.domain.trade.TradeImportBusinessException;
  * @author Whitehead (nwhitehead AT heliosdev DOT org)
  * <p><code>org.tradex.validation.trade.TradeImportValidation</code></p>
  */
-
+@ManagedResource(description="Validation bean for trade imports")
 public class TradeImportValidation implements InitializingBean {
 	/** The data source for querying the ISIN DB */
 	@Autowired(required=true)
@@ -67,19 +68,28 @@ public class TradeImportValidation implements InitializingBean {
 	 * <p>Once the trade has failed {@link #maxRetries} times, the exchange will have its <b>fault</b> flag set,
 	 * indicating an unrecoverable error.</p>
 	 * @param tradeExchange the exchange containing the trade to validate
+	 * @throws TradeImportBusinessException Thrown on business validation failures
 	 */
 	@Handler
-	public void validateTrade(Exchange tradeExchange) {
+	public void validateTrade(Exchange tradeExchange) throws TradeImportBusinessException {
 		ITrade trade = tradeExchange.getIn().getBody(ITrade.class);
 		try {
 			if(1>jdbcTemplate.queryForInt("SELECT COUNT(*) FROM ISIN WHERE ISIN = :isin", Collections.singletonMap("isin", trade.getIsin()))) {
 				throw new Exception("Invalid ISIN [" + trade.getIsin() + "]");				
 			}					
 		} catch (Exception ex) {
-			TradeImportBusinessException tibe = new TradeImportBusinessException("Failed to validate Trade [" + trade + "]", ex); 			
-			int retries = getRetryCount(tradeExchange);
-			log.warn("\n\t======================\n\tFailed trade retry count: [" + retries + "]\n\t======================\n");
-			tradeExchange.setException(tibe);
+			TradeImportBusinessException tibe = new TradeImportBusinessException("Failed to validate Trade [" + trade + "]", ex);
+//			final int retries = getRetryCount(tradeExchange);//tradeExchange.getProperty(Exchange.REDELIVERY_COUNTER, 0, Integer.class);
+//			log.warn("\n\t======================\n\tFailed trade retry count: [" + retries + "]\n\t======================\n");
+//			if(retries>=maxRetries) {
+//				Message fault = tradeExchange.getOut();
+//				fault.setFault(true);												
+//			}
+//			tradeExchange.setException(tibe);
+			throw tibe;
+//			int retries = getRetryCount(tradeExchange);
+//			log.warn("\n\t======================\n\tFailed trade retry count: [" + retries + "]\n\t======================\n");
+//			tradeExchange.setException(tibe);
 //			if(retries>=maxRetries) {
 //				Message fault = tradeExchange.getOut();
 //				fault.setFault(true);				

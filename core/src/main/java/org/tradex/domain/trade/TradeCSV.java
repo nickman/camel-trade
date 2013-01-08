@@ -4,6 +4,8 @@ package org.tradex.domain.trade;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 import org.apache.camel.dataformat.bindy.annotation.CsvRecord;
 import org.apache.camel.dataformat.bindy.annotation.DataField;
 
@@ -12,9 +14,10 @@ import org.apache.camel.dataformat.bindy.annotation.DataField;
  * <p>Description: Trade implementation annotated for CSV parsing</p> 
  * <p>Company: Helios Development Group LLC</p>
  * @author Whitehead (nwhitehead AT heliosdev DOT org)
- * <p><code>test.org.tradex.domain.TradeCSV</code></p>
+ * <p><code>test.org.tradex.domain.trade.TradeCSV</code></p>
  */
 @CsvRecord(separator = ",")
+@XmlRootElement(name="TradeCSV")
 public class TradeCSV implements ITrade {
 	/** The trade Id */
 	@DataField(pos = 1, required = true, trim= true)

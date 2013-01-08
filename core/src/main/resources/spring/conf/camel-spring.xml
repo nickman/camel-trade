@@ -76,44 +76,76 @@
     	<property name="sessionFactory" ref="sessionFactory"/>
   	</bean>	
 	
-	 
+	 <bean id="aggregatorStrategy" class="org.tradex.camel.aggregator.TradeImportAggregator"/>
 	
 
 	<camelContext xmlns="http://camel.apache.org/schema/spring" trace="false" id="TradexContext" autoStartup="true"  >
-				
-		<camel:errorHandler id="TradexImportErrorHandler" type="DeadLetterChannel" deadLetterUri="file:/tmp/tradein/.dlq"  >			
-			<camel:redeliveryPolicy useCollisionAvoidance="true"  maximumRedeliveries="5" maximumRedeliveryDelay="15000" retryAttemptedLogLevel="WARN" retriesExhaustedLogLevel="ERROR" />
+		<!-- 
+		<camel:errorHandler id="TradexImportErrorHandler" type="DeadLetterChannel" deadLetterUri="direct:handleTradeError" useOriginalMessage="true"  >			
+			<camel:redeliveryPolicy useCollisionAvoidance="true"  maximumRedeliveries="6" maximumRedeliveryDelay="15000" retryAttemptedLogLevel="WARN" retriesExhaustedLogLevel="ERROR" />
 		</camel:errorHandler>
+		-->
+			
 
 		<camel:threadPoolProfile id="FileImportThreadPool" poolSize="5"  maxPoolSize="10" maxQueueSize="1000" >
 			<camel:description>Trade Import Thread Pool</camel:description>
 		</camel:threadPoolProfile>
-		<camel:endpoint id="TradexHibernate" uri="hibernate://tradex" />
 		
+		<camel:endpoint id="TradexHibernate" uri="hibernate://tradex" />
+
+		<camel:onException id="TradeImportBusinessExceptionHandler" useOriginalMessage="true"  >
+			<camel:exception>org.tradex.domain.trade.TradeImportBusinessException</camel:exception>
+			<camel:redeliveryPolicy redeliveryDelay="3000" maximumRedeliveries="3" maximumRedeliveryDelay="15000" retryAttemptedLogLevel="WARN" retriesExhaustedLogLevel="ERROR" asyncDelayedRedelivery="true"  />
+			<camel:handled><camel:constant>true</camel:constant></camel:handled>
+			<camel:to uri="direct:handleTradeError" />					
+		</camel:onException>
 				
-		<route autoStartup="true" id="TradeImport">
-			
-			<from uri="file:/tmp/tradein?idempotent=true&amp;filter=#FileImportAntFilter&amp;idempotentRepository=#fileImportIdempotentRepository&amp;delay=5000&amp;move=.done">			
-				<camel:description>Trade Import File Poller</camel:description>				
-			</from>			
-			
+		<camel:route autoStartup="true" id="TradeImport" handleFault="true" >
+			<camel:from id="TradeImportFile" uri="file:c:/temp/tradein?idempotent=true&amp;filter=#FileImportAntFilter&amp;idempotentRepository=#fileImportIdempotentRepository&amp;delay=5000&amp;delete=true" />								
 			<camel:transacted id="FileImporterTransaction" ref="requiredTx" />
 			<unmarshal id="TradeImportUnmarshaller" ref="TradexCSVFormat" />
-
+			<camel:setHeader headerName="CamelTradeCount">
+				<camel:simple>${body.size}</camel:simple>				
+			</camel:setHeader>
 			
-		    <camel:to id="TradeImportLogger" uri="log:test.org.tradex.domain?level=INFO&amp;showAll=true&amp;multiline=true" />
-			<camel:split streaming="true" id="TradeImportSplit">
+			<camel:to id="TradeImportLogger" uri="log:test.org.tradex.BEFORESPLIT?level=INFO&amp;showAll=true&amp;multiline=true" />		    
+			<camel:split streaming="false" id="TradeImportSplit">
 				<camel:method bean="olu" method="split" id="TradeImportSplitter" />
 				<camel:bean id="TradeValidation"  ref="TradeValidator" method="validateTrade"  />				
-				<camel:to ref="TradexHibernate" />
+				<camel:to ref="TradexHibernate" />				
 			</camel:split>
+			<camel:aggregate strategyRef="aggregatorStrategy">
+				<camel:correlationExpression><simple>${header.CamelFileName}</simple></camel:correlationExpression>
+				<!-- <camel:completionSize><simple>${header.CamelTradeCount}</simple></camel:completionSize> -->
+				<camel:completionSize><camel:constant>5</camel:constant></camel:completionSize>
+				<camel:to uri="log:test.org.tradex.AFTERAGGR?level=INFO&amp;showAll=true&amp;multiline=true" />
+				<!-- 
+				<camel:marshal>					
+	           		<camel:jaxb prettyPrint="true" encoding="iso-8859-1" contextPath="org.tradex.domain.trade"/>
+	       		</camel:marshal>	        		
+	       		<to uri="log:jaxb"/>
+	       		-->			
+			</camel:aggregate>						
+			<camel:onCompletion useOriginalMessage="true" onCompleteOnly="true" >				
+				<camel:to uri="direct:handleTradeComplete" />
+			</camel:onCompletion>					
+		</camel:route>
+		
+		<route autoStartup="true" id="TradeImportFailureHandler">
+			<camel:from id="DirectTradeErrorHandler" uri="direct:handleTradeError" />
+			<marshal id="FailedTradeImportMarshaller" ref="TradexCSVFormat" />
+			<camel:to id="FailedTradeDLQ" uri="file:c:/temp/tradein/.dlq/?fileExist=Append" />
 		</route>
 		
+		<route autoStartup="true" id="TradeImportCompletionHandler">
+			<camel:from id="DirectTradeCompletionHandler" uri="direct:handleTradeComplete" />
+			<marshal id="CompleteTradeImportMarshaller" ref="TradexCSVFormat" />
+			<camel:to id="TradeDoneDirectory" uri="file:c:/temp/tradein/.done/?fileExist=Append" />
+		</route>
+		
+		
 		<route autoStartup="true" id="IsinImport">
-			<from uri="file:/tmp/isinsin?idempotent=true&amp;filter=#IsinImportAntFilter&amp;idempotentRepository=#IsinImportIdempotentRepository&amp;delay=5000&amp;initialDelay=0&amp;move=.done">			
-				<camel:description>Isin Import File Poller</camel:description>
-			</from>			
-			
+			<camel:from uri="file:c:/temp/isinsin?idempotent=true&amp;filter=#IsinImportAntFilter&amp;idempotentRepository=#IsinImportIdempotentRepository&amp;delay=5000&amp;initialDelay=0&amp;move=.done" />			
 			<camel:transacted id="IsiImporterTransaction" ref="requiredTx" />
 			<unmarshal id="IsiImportUnmarshaller" ref="IsinCSVFormat" />
 		    <camel:to id="IsinImportLogger" uri="log:test.org.tradex.domain?level=INFO&amp;showAll=true&amp;multiline=true" />

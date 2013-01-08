@@ -3,8 +3,8 @@
 "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
 "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
 <hibernate-configuration>
-    <session-factory>
-        <property name="hibernate.bytecode.use_reflection_optimizer">false</property>
+    <session-factory>    	
+        <property name="hibernate.bytecode.use_reflection_optimizer">true</property>
         <property name="hibernate.dialect">org.hibernate.dialect.H2Dialect</property>
         <property name="hibernate.search.autoregister_listeners">false</property>
         <mapping resource="hibernate/conf/Trade.hbm.xml" />
