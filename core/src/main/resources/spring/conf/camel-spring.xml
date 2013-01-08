@@ -64,7 +64,7 @@
 		<constructor-arg value="org.tradex.domain.isin" />
 	</bean>
 	
-	<bean id="TradeValidator" class="org.tradex.validation.TradeImportValidation" />
+	<bean id="TradeValidator" class="org.tradex.validation.trade.TradeImportValidation" />
 	
 	
 	<bean id="requiredTx" class="org.apache.camel.spring.spi.SpringTransactionPolicy">
@@ -79,9 +79,10 @@
 	 
 	
 
-	<camelContext xmlns="http://camel.apache.org/schema/spring" trace="false" id="TradexContext" autoStartup="true"  >			
-		<camel:errorHandler id="TradexImportErrorHandler" >
-			<camel:redeliveryPolicy maximumRedeliveries="5" maximumRedeliveryDelay="15000" retryAttemptedLogLevel="WARN" retriesExhaustedLogLevel="ERROR" />
+	<camelContext xmlns="http://camel.apache.org/schema/spring" trace="false" id="TradexContext" autoStartup="true"  >
+				
+		<camel:errorHandler id="TradexImportErrorHandler" type="DeadLetterChannel" deadLetterUri="file:/tmp/tradein/.dlq"  >			
+			<camel:redeliveryPolicy useCollisionAvoidance="true"  maximumRedeliveries="5" maximumRedeliveryDelay="15000" retryAttemptedLogLevel="WARN" retriesExhaustedLogLevel="ERROR" />
 		</camel:errorHandler>
 
 		<camel:threadPoolProfile id="FileImportThreadPool" poolSize="5"  maxPoolSize="10" maxQueueSize="1000" >
