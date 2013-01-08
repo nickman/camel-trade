@@ -110,22 +110,23 @@
 			
 			<camel:to id="TradeImportLogger" uri="log:test.org.tradex.BEFORESPLIT?level=INFO&amp;showAll=true&amp;multiline=true" />		    
 			<camel:split streaming="false" id="TradeImportSplit">
-				<camel:method bean="olu" method="split" id="TradeImportSplitter" />
-				<camel:bean id="TradeValidation"  ref="TradeValidator" method="validateTrade"  />				
-				<camel:to ref="TradexHibernate" />				
+				<camel:method bean="olu" method="split" id="TradeImportSplitter" />				
+				<camel:bean id="TradeValidation"  ref="TradeValidator" method="validateTrade"  />
+				<camel:to uri="log:test.org.tradex.BEFOREAGGR?level=INFO&amp;showAll=true&amp;multiline=true" />
+				<camel:aggregate strategyRef="aggregatorStrategy">
+					<camel:correlationExpression><simple>${header.CamelFileName}</simple></camel:correlationExpression>
+					<!-- <camel:completionSize><simple>${header.CamelTradeCount}</simple></camel:completionSize> -->
+					<camel:completionSize><camel:constant>5</camel:constant></camel:completionSize>
+					<camel:to uri="log:test.org.tradex.AFTERAGGR?level=INFO&amp;showAll=true&amp;multiline=true" />
+					<!-- 
+					<camel:marshal>					
+		           		<camel:jaxb prettyPrint="true" encoding="iso-8859-1" contextPath="org.tradex.domain.trade"/>
+		       		</camel:marshal>	        		
+		       		<to uri="log:jaxb"/>
+		       		-->			
+				</camel:aggregate>														
+				<camel:to ref="TradexHibernate" />
 			</camel:split>
-			<camel:aggregate strategyRef="aggregatorStrategy">
-				<camel:correlationExpression><simple>${header.CamelFileName}</simple></camel:correlationExpression>
-				<!-- <camel:completionSize><simple>${header.CamelTradeCount}</simple></camel:completionSize> -->
-				<camel:completionSize><camel:constant>5</camel:constant></camel:completionSize>
-				<camel:to uri="log:test.org.tradex.AFTERAGGR?level=INFO&amp;showAll=true&amp;multiline=true" />
-				<!-- 
-				<camel:marshal>					
-	           		<camel:jaxb prettyPrint="true" encoding="iso-8859-1" contextPath="org.tradex.domain.trade"/>
-	       		</camel:marshal>	        		
-	       		<to uri="log:jaxb"/>
-	       		-->			
-			</camel:aggregate>						
 			<camel:onCompletion useOriginalMessage="true" onCompleteOnly="true" >				
 				<camel:to uri="direct:handleTradeComplete" />
 			</camel:onCompletion>					

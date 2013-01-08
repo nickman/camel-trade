@@ -48,10 +48,12 @@ public class TradeImportAggregator implements AggregationStrategy {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
-		Message newIn = newExchange.getIn();   
-		ArrayList<ITrade> oldBody = oldExchange.getIn().getBody(ArrayList.class);   
-		ArrayList<ITrade> newBody = newIn.getBody(ArrayList.class);   
-		newIn.setBody(oldBody.addAll(newBody));   
+		Message newIn = newExchange.getIn();   		   
+		ArrayList<ITrade> newBody = newIn.getBody(ArrayList.class);
+		if(oldExchange!=null) {
+			ArrayList<ITrade> oldBody = oldExchange.getIn().getBody(ArrayList.class);
+			newIn.setBody(oldBody.addAll(newBody));
+		}
 		return newExchange;
 	}
 
