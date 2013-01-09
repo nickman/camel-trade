@@ -149,6 +149,35 @@
 		
 		<!--   
 		  =================================================================================
+		  Apache ActiveMQ Dependencies
+		  =================================================================================
+		-->
+
+		<dependency>
+		  <groupId>org.apache.activemq</groupId>
+		  <artifactId>activemq-camel</artifactId>
+		</dependency>
+		
+		<dependency>
+		   <groupId>org.apache.activemq</groupId>
+		   <artifactId>activemq-pool</artifactId>
+		</dependency>
+		
+		<dependency>
+		  <groupId>org.apache.xbean</groupId>
+		  <artifactId>xbean-spring</artifactId>
+		</dependency>
+		
+		<dependency>
+		  <groupId>org.jencks</groupId>
+		  <artifactId>jencks-amqpool</artifactId>
+		  <version>2.2</version>
+		</dependency>
+		
+		
+		
+		<!--   
+		  =================================================================================
 		  Apache Camel Dependencies
 		  =================================================================================
 		-->
@@ -161,7 +190,7 @@
 		  <groupId>org.apache.camel</groupId>
 		  <artifactId>camel-jaxb</artifactId>
 		</dependency>
-
+		
 		<dependency>
 		  <groupId>org.apache.camel</groupId>
 		  <artifactId>camel-core</artifactId>
@@ -294,6 +323,8 @@
 			  <groupId>org.jboss</groupId>
 			  <artifactId>jboss-common-core</artifactId>
 			</dependency>
+
+
 		  
 		
 	</dependencies>

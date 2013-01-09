@@ -10,7 +10,7 @@
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 	
-	<util:properties id="jndiProperties" >
+	<util:properties id="jndiProperties">
 		<prop key="java.naming.factory.initial">org.jnp.interfaces.NamingContextFactory</prop>
 		<prop key="java.naming.factory.url.pkgs">org.jboss.naming</prop>
 		<prop key="com.theice.jmx.domain">DefaultDomain</prop>

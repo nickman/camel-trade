@@ -44,6 +44,15 @@ public class TradeCSV implements ITrade {
 	@DataField(pos = 8, required = false, trim= true)
 	protected String commonCode;
 	
+	/** The status of this trade */	
+	protected String status = TradeStatus.INITIAL.name();
+	/** A status message */	
+	protected String message;
+	/** The timestamp of the last update */	
+	protected Date lastUpdate = new Date();
+	
+
+	
 	/**
 	 * {@inheritDoc}
 	 * @see org.tradex.domain.trade.ITrade#getTradeId()
@@ -209,6 +218,54 @@ public class TradeCSV implements ITrade {
 		builder.append(commonCode);
 		builder.append("]");
 		return builder.toString();
+	}
+
+	/**
+	 * Returns the status of this trade
+	 * @return the status of this trade
+	 */
+	public String getStatus() {
+		return status;
+	}
+
+	/**
+	 * Sets the status of this trade
+	 * @param status the new status
+	 */
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	/**
+	 * Returns the status message for this trade
+	 * @return the status message 
+	 */
+	public String getMessage() {
+		return message;
+	}
+
+	/**
+	 * Sets the status message for this trade
+	 * @param message the status message
+	 */
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	/**
+	 * Returns the timestamp of the last update to this trade
+	 * @return the timestamp of the last update to this trade
+	 */
+	public Date getLastUpdate() {
+		return lastUpdate;
+	}
+
+	/**
+	 * Sets the timestamp of the last update to this trade
+	 * @param lastUpdate the timestamp of the last update to this trade
+	 */
+	public void setLastUpdate(Date lastUpdate) {
+		this.lastUpdate = lastUpdate;
 	}
 	
 	

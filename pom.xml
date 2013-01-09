@@ -27,7 +27,9 @@
 		<jboss-logging.version>3.1.0.GA</jboss-logging.version>
 		<slf4j.version>1.6.1</slf4j.version>
 		<jboss-jnp.version>4.2.2.GA</jboss-jnp.version>
-		<jboss-common.version>2.2.20.GA</jboss-common.version>		
+		<jboss-common.version>2.2.20.GA</jboss-common.version>	
+		<activemq.version>5.7.0</activemq.version>	
+		<xbean-spring.version>3.9</xbean-spring.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<dependencyManagement>
@@ -165,6 +167,31 @@
 			  <artifactId>spring-expression</artifactId>
 			  <version>${spring.version}</version>
 			</dependency>
+
+			<!--   
+			  =================================================================================
+			  Apache ActiveMQ Dependencies
+			  =================================================================================
+			-->
+
+			<dependency>
+			  <groupId>org.apache.activemq</groupId>
+			  <artifactId>activemq-camel</artifactId>
+			  <version>${activemq.version}</version>
+			</dependency>
+			
+			<dependency>
+			   <groupId>org.apache.activemq</groupId>
+			   <artifactId>activemq-pool</artifactId>
+			   <version>${activemq.version}</version>
+			</dependency>
+			
+			<dependency>
+			  <groupId>org.apache.xbean</groupId>
+			  <artifactId>xbean-spring</artifactId>
+			  <version>${xbean-spring.version}</version>
+			</dependency>
+			
 			
 			<!--   
 			  =================================================================================

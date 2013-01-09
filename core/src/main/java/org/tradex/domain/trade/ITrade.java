@@ -58,4 +58,50 @@ public interface ITrade {
 	 * @param commonCode the security common code
 	 */
 	public void setCommonCode(String commonCode);
+	
+	/**
+	 * Returns the status of this trade
+	 * @return the status of this trade
+	 */
+	public String getStatus();
+
+	/**
+	 * Sets the status of this trade
+	 * @param status the new status
+	 */
+	public void setStatus(String status);
+
+	/**
+	 * Returns the status message for this trade
+	 * @return the status message 
+	 */
+	public String getMessage();
+
+	/**
+	 * Sets the status message for this trade
+	 * @param message the status message
+	 */
+	public void setMessage(String message);
+
+	/**
+	 * Returns the timestamp of the last update to this trade
+	 * @return the timestamp of the last update to this trade
+	 */
+	public Date getLastUpdate();
+	
+	/**
+	 * <p>Title: TradeStatus</p>
+	 * <p>Description: Enumerates the possible states of a trade</p> 
+	 * <p>Company: Helios Development Group LLC</p>
+	 * @author Whitehead (nwhitehead AT heliosdev DOT org)
+	 * <p><code>org.tradex.domain.trade.ITrade.TradeStatus</code></p>
+	 */
+	public static enum TradeStatus {
+		INITIAL,
+		CAPTURED,
+		SENT,
+		CONFIRMED,
+		ERROR;
+	}
+	
 }

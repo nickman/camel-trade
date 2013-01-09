@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:jms="http://www.springframework.org/schema/jms"
+       xmlns:amq="http://activemq.apache.org/schema/core"       
+       xsi:schemaLocation="
+       http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd
+       http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms.xsd
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd       
+       ">
+	
+	
+	<bean id="activemq" class="org.apache.activemq.camel.component.ActiveMQComponent" depends-on="tradexAmqBroker">	
+		<property name="transacted" value="false" />	
+		<property name="transactionManager" ref="transactionManager"/>		
+		<property name="connectionFactory" ref="amqConnectionFactory" />
+		<property name="autoStartup" value="true" />
+		<property name="cacheLevelName" value="CACHE_NONE"/>
+	</bean>
+	
+	<bean id="txJms" class="org.springframework.jms.connection.JmsTransactionManager">
+		<property name="connectionFactory" ref="amqConnectionFactory" />
+	</bean>
+	
+	<amq:broker id="tradexAmqBroker" useJmx="true" persistent="false" brokerId="tradex" brokerName="tradex" enableStatistics="true" start="true"  >		
+    	<amq:destinationPolicy>
+    		<amq:policyMap>
+    			<amq:policyEntries>
+    				<amq:policyEntry queue="tradex.in.>" gcInactiveDestinations="false" inactiveTimoutBeforeGC="30000" useCache="false" />
+    			</amq:policyEntries>
+    		</amq:policyMap>
+    	</amq:destinationPolicy>
+		<amq:managementContext>
+			<amq:managementContext findTigerMbeanServer="true" createConnector="false" createMBeanServer="false" />
+		</amq:managementContext>    	    	    		
+    	<amq:persistenceAdapter>
+    		<amq:memoryPersistenceAdapter id="memoryPersistenceAdapter" />
+    	</amq:persistenceAdapter>
+    	
+		<amq:plugins>
+			<amq:simpleAuthenticationPlugin anonymousAccessAllowed="true" ></amq:simpleAuthenticationPlugin>
+		</amq:plugins>    	
+    	
+    	<amq:transportConnectors>
+      		<amq:transportConnector name="TCP" uri="tcp://0.0.0.0:4185" />
+      		<amq:transportConnector name="VM" uri="vm://tradex?create=false" />
+      		<amq:transportConnector name="NIO" uri="nio://0.0.0.0:4186"/>      		
+    	</amq:transportConnectors>
+    	
+    	
+    	
+  	</amq:broker>
+  	
+  	<amq:xaConnectionFactory id="xaConnectionFactory" brokerURL="vm://tradex?create=false" statsEnabled="true" ></amq:xaConnectionFactory>
+  	
+	<bean id="amqConnectionFactory" class="org.jencks.amqpool.XaPooledConnectionFactory" depends-on="tradexAmqBroker">
+    	<constructor-arg value="vm://tradex?create=false" />
+    	<property name="maxConnections" value="8" />
+    	<property name="transactionManager" ref="jbossTransactionManager" />
+    	
+  	</bean>
+
+  	
+  	<amq:queue id="tradex.OUT" name="tradex.OUT" physicalName="tradex.OUT" />
+  	<amq:queue id="tradex.IN" name="tradex.IN" physicalName="tradex.IN" />
+  	
+  	
+	<!-- 
+		 <bean id="amqConnectionFactory" class="org.apache.activemq.pool.XaPooledConnectionFactory" init-method="start" destroy-method="stop"  depends-on="tradexAmqBroker">
+	    <property name="connectionFactory">
+	      <bean class="org.apache.activemq.ActiveMQXAConnectionFactory">
+	        <property name="brokerURL" value="vm://tradex?create=false" />	 	            
+	      </bean>
+	    </property>
+	    <property name="maxConnections" value="12"/>
+	    <property name="transactionManager" ref="jbossTransactionManager" />
+	    <property name="createConnectionOnStartup" value="false"/>
+	  </bean>    
+	
+	 -->    
+    
+	<bean id="jmsXaConnectionFactory" class="org.springframework.jms.connection.TransactionAwareConnectionFactoryProxy"  depends-on="tradexAmqBroker">		
+		<property name="targetConnectionFactory" ref="xaConnectionFactory" />
+		<!-- 
+	      <bean class="org.apache.activemq.ActiveMQXAConnectionFactory">
+	        <property name="brokerURL" value="vm://tradex?create=false" />
+	      </bean>		
+		</property>  -->
+		<property name="synchedLocalTransactionAllowed" value="false"/>
+	</bean>
+    
+  	
+  	
+
+</beans>
+

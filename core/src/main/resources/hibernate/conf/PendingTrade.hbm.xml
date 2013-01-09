@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping  >
+    <class name="org.tradex.domain.pending.PendingTrade" table="PENDING_TRADE" schema="PUBLIC"  >
+        <id name="orderId" type="string">
+            <column name="ORDER_ID" />
+        </id>
+        
+        <property name="tradeXml" type="clob" not-null="true">
+            <column name="TRADE_XML" />
+        </property>
+        
+        
+	</class>
+    
+</hibernate-mapping>
+	

@@ -35,6 +35,20 @@
         <property name="price" type="java.math.BigDecimal" not-null="true">
             <column name="PRICE" />
         </property>
+        
+        <property name="status" type="string" length="10" not-null="true">
+            <column name="STATUS" />
+        </property>
+
+        <property name="lastUpdate" type="timestamp" not-null="true">
+            <column name="LAST_UPDATE" />
+        </property>
+        
+        <property name="message" type="string" length="400" not-null="false">
+            <column name="MESSAGE" />
+        </property>
+        
+        
 	</class>
     
 </hibernate-mapping>

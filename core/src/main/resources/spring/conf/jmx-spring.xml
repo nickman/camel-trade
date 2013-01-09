@@ -10,7 +10,7 @@
        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
-	<util:properties id="jmxProperties" >
+	<util:properties id="jmxProperties">
 		<prop key="javax.management.rmi.registry.port">2005</prop>
 		<!-- Comment to use the JBoss MBeanServer -->
 		<prop key="javax.management.builder.initial">javax.management.MBeanServerBuilder</prop>

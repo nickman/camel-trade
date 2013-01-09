@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.transaction.xa.XAResource;
+
 import org.apache.log4j.Logger;
 import org.tradex.tx.TXStatus;
 import org.tradex.tx.TransactionHelper;
@@ -67,7 +69,10 @@ public class ObjectListUnwrapper<T> {
 		StringBuilder b = new StringBuilder("\nTransaction Dump:");
 		b.append("\n\tTX Status:").append(TransactionHelper.getTransactionState());
 		b.append("\n\tTX UID:").append(TransactionHelper.getTransactionUID());
-		b.append("\n\tTX Class:").append(TransactionHelper.getCurrentTransaction().getClass().getName());
+		b.append("\n\tXA Resources:");
+		for(XAResource xar : TransactionHelper.getTransactionResources().keySet()) {
+			b.append("\n\t\t[").append(xar.getClass().getName()).append("]:").append(xar);
+		}
 		b.append("\n===================");
 		TransactionHelper.registerSynchronizationRunnable(new Runnable(){
 			@Override
@@ -75,6 +80,10 @@ public class ObjectListUnwrapper<T> {
 				StringBuilder b = new StringBuilder("\nTransaction Dump:");
 				b.append("\n\tTX Status:").append(TransactionHelper.getTransactionState());
 				b.append("\n\tTX UID:").append(TransactionHelper.getTransactionUID());
+				b.append("\n\tXA Resources:");
+				for(XAResource xar : TransactionHelper.getTransactionResources().keySet()) {
+					b.append("\n\t\t[").append(xar.getClass().getName()).append("]:").append(xar);
+				}
 				b.append("\n===================");
 				log.info(b);
 			}
