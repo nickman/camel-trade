@@ -6,7 +6,7 @@ import groovy.sql.*;
 sql = Sql.newInstance( 'jdbc:h2:tcp://localhost:4083/mem:testdb', 'sa', '', 'org.h2.Driver');
 conn = sql.getConnection();
 println "Connected to ${conn.getMetaData().getURL()}";
-
+boolean addError = true;
 types = ['BUY', 'SELL'] as String[];
 
 
@@ -30,11 +30,17 @@ for(x in 0..100) {
         tradeId = new AtomicLong(seq("TRADE"));
         orderId = new AtomicLong(seq("ORDER"));
         timeOff = new AtomicLong(0L);
-        recordCount = r(100);
-        for(i in 0..100) {
+        //recordCount = r(100);
+        recordCount = 10;
+        int errorRecord = r(recordCount);
+        for(i in 0..10) {
             b = new StringBuilder();
             b.append(tradeId.incrementAndGet()).append(",");
-            b.append(isins[r(isinCount)]).append(",");
+            isin = isins[r(isinCount)];
+            if(addError && i==errorRecord) {
+                isin = "XXX${isin}";
+            }
+            b.append(isin).append(",");
             b.append(orderId.incrementAndGet()).append("-${fileId},");
             priceStr = "${r(1000000)}.${r(99)}";
             price = new BigDecimal(priceStr);
@@ -43,7 +49,7 @@ for(x in 0..100) {
             timeOff.addAndGet(r(5000));
             b.append(dt.format(new Date(System.currentTimeMillis() + timeOff.get()))).append(",");
             b.append(types[r(2)]);
-            //println b;
+            println b;
             b.append("\n");
             outFile.append(b.toString());
             //tradeId.addAndGet(r(200));

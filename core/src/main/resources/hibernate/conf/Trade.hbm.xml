@@ -22,6 +22,11 @@
         <property name="isin" type="string" length="30" not-null="true">
             <column name="ISIN" />
         </property>
+        
+        <property name="commonCode" type="string" length="30" not-null="true">
+            <column name="COMMON_CODE" />
+        </property>
+        
 
         <property name="type" type="string" length="5" not-null="true">
             <column name="TYPE" />

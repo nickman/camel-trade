@@ -75,6 +75,8 @@
 	<bean id="hibernate" class="org.apacheextras.camel.component.hibernate.HibernateComponent">
     	<property name="sessionFactory" ref="sessionFactory"/>
   	</bean>	
+  	
+  	<bean id="tradeEnricher" class="org.tradex.camel.enrich.TradeCommonCodeEnricher" />
 	
 	 <bean id="aggregatorStrategy" class="org.tradex.camel.aggregator.TradeImportAggregator"/>
 	
@@ -101,7 +103,8 @@
 		</camel:onException>
 				
 		<camel:route autoStartup="true" id="TradeImport" handleFault="true" >
-			<camel:from id="TradeImportFile" uri="file:c:/temp/tradein?idempotent=true&amp;filter=#FileImportAntFilter&amp;idempotentRepository=#fileImportIdempotentRepository&amp;delay=5000&amp;delete=true" />								
+			<!-- <camel:from id="TradeImportFile" uri="file:c:/temp/tradein?idempotent=true&amp;filter=#FileImportAntFilter&amp;idempotentRepository=#fileImportIdempotentRepository&amp;delay=5000&amp;delete=true" /> -->
+			<camel:from id="TradeImportFile" uri="file:/tmp/tradein?idempotent=true&amp;filter=#FileImportAntFilter&amp;idempotentRepository=#fileImportIdempotentRepository&amp;delay=5000&amp;delete=true" />								
 			<camel:transacted id="FileImporterTransaction" ref="requiredTx" />
 			<unmarshal id="TradeImportUnmarshaller" ref="TradexCSVFormat" />
 			<camel:setHeader headerName="CamelTradeCount">
@@ -109,22 +112,10 @@
 			</camel:setHeader>
 			
 			<camel:to id="TradeImportLogger" uri="log:test.org.tradex.BEFORESPLIT?level=INFO&amp;showAll=true&amp;multiline=true" />		    
-			<camel:split streaming="false" id="TradeImportSplit">
-				<camel:method bean="olu" method="split" id="TradeImportSplitter" />				
+			<camel:split streaming="true" id="TradeImportSplit">
+				<camel:method bean="olu" method="split" id="TradeImportSplitter" />
+				<camel:process id="TradeEnricher" ref="tradeEnricher" />								
 				<camel:bean id="TradeValidation"  ref="TradeValidator" method="validateTrade"  />
-				<camel:to uri="log:test.org.tradex.BEFOREAGGR?level=INFO&amp;showAll=true&amp;multiline=true" />
-				<camel:aggregate strategyRef="aggregatorStrategy">
-					<camel:correlationExpression><simple>${header.CamelFileName}</simple></camel:correlationExpression>
-					<!-- <camel:completionSize><simple>${header.CamelTradeCount}</simple></camel:completionSize> -->
-					<camel:completionSize><camel:constant>5</camel:constant></camel:completionSize>
-					<camel:to uri="log:test.org.tradex.AFTERAGGR?level=INFO&amp;showAll=true&amp;multiline=true" />
-					<!-- 
-					<camel:marshal>					
-		           		<camel:jaxb prettyPrint="true" encoding="iso-8859-1" contextPath="org.tradex.domain.trade"/>
-		       		</camel:marshal>	        		
-		       		<to uri="log:jaxb"/>
-		       		-->			
-				</camel:aggregate>														
 				<camel:to ref="TradexHibernate" />
 			</camel:split>
 			<camel:onCompletion useOriginalMessage="true" onCompleteOnly="true" >				
@@ -146,7 +137,8 @@
 		
 		
 		<route autoStartup="true" id="IsinImport">
-			<camel:from uri="file:c:/temp/isinsin?idempotent=true&amp;filter=#IsinImportAntFilter&amp;idempotentRepository=#IsinImportIdempotentRepository&amp;delay=5000&amp;initialDelay=0&amp;move=.done" />			
+			<!-- <camel:from uri="file:c:/temp/isinsin?idempotent=true&amp;filter=#IsinImportAntFilter&amp;idempotentRepository=#IsinImportIdempotentRepository&amp;delay=5000&amp;initialDelay=0&amp;move=.done" /> -->
+			<camel:from uri="file:/tmp/isinsin?idempotent=true&amp;filter=#IsinImportAntFilter&amp;idempotentRepository=#IsinImportIdempotentRepository&amp;delay=5000&amp;initialDelay=0&amp;move=.done" />			
 			<camel:transacted id="IsiImporterTransaction" ref="requiredTx" />
 			<unmarshal id="IsiImportUnmarshaller" ref="IsinCSVFormat" />
 		    <camel:to id="IsinImportLogger" uri="log:test.org.tradex.domain?level=INFO&amp;showAll=true&amp;multiline=true" />
@@ -163,3 +155,23 @@
 
        
 </beans>
+
+
+<!-- 
+================  TRADE AGGREGATOR  ===================
+				<camel:to uri="log:test.org.tradex.BEFOREAGGR?level=INFO&amp;showAll=true&amp;multiline=true" />
+				<camel:aggregate strategyRef="aggregatorStrategy">
+					<camel:correlationExpression><simple>${header.CamelFileName}</simple></camel:correlationExpression>
+					<camel:completionSize><simple>${header.CamelTradeCount}</simple></camel:completionSize>
+					
+					<camel:to uri="log:test.org.tradex.AFTERAGGR?level=INFO&amp;showAll=true&amp;multiline=true" />
+					 
+					<camel:marshal>					
+		           		<camel:jaxb prettyPrint="true" encoding="iso-8859-1" contextPath="org.tradex.domain.trade"/>
+		       		</camel:marshal>	        		
+		       		<to uri="log:jaxb"/>
+		       					
+				</camel:aggregate>														
+
+
+ -->

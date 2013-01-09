@@ -24,12 +24,12 @@
  */
 package org.tradex.camel.aggregator;
 
-import java.util.ArrayList;
-
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.processor.aggregate.AggregationStrategy;
 import org.tradex.domain.trade.ITrade;
+import org.tradex.domain.trade.TradeCSV;
+import org.tradex.domain.trade.TradeCollection;
 
 /**
  * <p>Title: TradeImportAggregator</p>
@@ -45,16 +45,30 @@ public class TradeImportAggregator implements AggregationStrategy {
 	 * {@inheritDoc}
 	 * @see org.apache.camel.processor.aggregate.AggregationStrategy#aggregate(org.apache.camel.Exchange, org.apache.camel.Exchange)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
 		Message newIn = newExchange.getIn();   		   
-		ArrayList<ITrade> newBody = newIn.getBody(ArrayList.class);
+		ITrade newTrade = newIn.getBody(ITrade.class);
+		TradeCollection oldBody =  null;
 		if(oldExchange!=null) {
-			ArrayList<ITrade> oldBody = oldExchange.getIn().getBody(ArrayList.class);
-			newIn.setBody(oldBody.addAll(newBody));
-		}
+			oldBody = oldExchange.getIn().getBody(TradeCollection.class);
+			oldBody.addTrade((TradeCSV)newTrade);
+			newIn.setBody(oldBody);
+		} else {
+			oldBody = TradeCollection.newInstance(newExchange); 
+		}				
+//		if(complete(newExchange)) {
+//			newIn.setBody(oldBody.getTrades());
+//		} else {
+//			newIn.setBody(oldBody);
+//		}
+		newIn.setBody(oldBody);
 		return newExchange;
+	}
+	
+	private boolean complete(Exchange ex) {
+		Boolean complete = ex.getProperty("CamelSplitComplete", Boolean.class);		
+		return complete==null ? false : complete;
 	}
 
 }

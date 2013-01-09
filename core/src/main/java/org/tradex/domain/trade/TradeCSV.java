@@ -40,6 +40,9 @@ public class TradeCSV implements ITrade {
 	/** The trade type */
 	@DataField(pos = 7, required = true, trim= true)
 	protected String type = null;
+	/** The security common code */
+	@DataField(pos = 8, required = false, trim= true)
+	protected String commonCode;
 	
 	/**
 	 * {@inheritDoc}
@@ -103,40 +106,109 @@ public class TradeCSV implements ITrade {
 	public BigDecimal getPrice() {
 		return price;
 	}
-
+	
+	/**
+	 * {@inheritDoc}
+	 * @see org.tradex.domain.trade.ITrade#getCommonCode()
+	 */
 	@Override
-	public String toString() {
-		return "TradeCSV [tradeId=" + tradeId + ", isin=" + isin + ", orderId="
-				+ orderId + ", price=" + price + ", businessDay=" + businessDay
-				+ ", sendingTime=" + sendingTime + ", type=" + type + "]";
+	public String getCommonCode() {
+		return commonCode;
 	}
+	
 
+
+	/**
+	 * Sets the trade id
+	 * @param tradeId the trade id
+	 */
 	public void setTradeId(long tradeId) {
 		this.tradeId = tradeId;
 	}
 
+	/**
+	 * Sets the ISIN
+	 * @param isin the ISIN code
+	 */
 	public void setIsin(String isin) {
 		this.isin = isin;
 	}
 
+	/**
+	 * Sets the order ID
+	 * @param orderId the order ID
+	 */
 	public void setOrderId(String orderId) {
 		this.orderId = orderId;
 	}
 
+	/**
+	 * Sets the trade price
+	 * @param price the trade price
+	 */
 	public void setPrice(BigDecimal price) {
 		this.price = price;
 	}
 
+	/**
+	 * Sets the trade business day
+	 * @param businessDay the trade business day
+	 */
 	public void setBusinessDay(Date businessDay) {
 		this.businessDay = businessDay;
 	}
 
+	/**
+	 * Sets the trade send time
+	 * @param sendingTime the trade send time
+	 */
 	public void setSendingTime(Date sendingTime) {
 		this.sendingTime = sendingTime;
 	}
 
+	/**
+	 * Sets the trade type
+	 * @param type the trade type
+	 */
 	public void setType(String type) {
 		this.type = type;
+	}
+
+
+	/**
+	 * {@inheritDoc}
+	 * @see org.tradex.domain.trade.ITrade#setCommonCode(java.lang.String)
+	 */
+	@Override
+	public void setCommonCode(String commonCode) {
+		this.commonCode = commonCode;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("TradeCSV [tradeId=");
+		builder.append(tradeId);
+		builder.append(", isin=");
+		builder.append(isin);
+		builder.append(", orderId=");
+		builder.append(orderId);
+		builder.append(", price=");
+		builder.append(price);
+		builder.append(", businessDay=");
+		builder.append(businessDay);
+		builder.append(", sendingTime=");
+		builder.append(sendingTime);
+		builder.append(", type=");
+		builder.append(type);
+		builder.append(", commonCode=");
+		builder.append(commonCode);
+		builder.append("]");
+		return builder.toString();
 	}
 	
 	

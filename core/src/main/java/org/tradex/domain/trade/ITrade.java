@@ -47,6 +47,15 @@ public interface ITrade {
 	 */
 	public BigDecimal getPrice();
 	
+	/**
+	 * Returns the security common code
+	 * @return the security common code
+	 */
+	public String getCommonCode();
 	
-	
+	/**
+	 * Sets the security common code
+	 * @param commonCode the security common code
+	 */
+	public void setCommonCode(String commonCode);
 }
