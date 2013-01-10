@@ -103,7 +103,10 @@
 			<camel:to uri="direct:handleTradeError" />					
 		</camel:onException>
 				
+		
+				
 		<camel:route autoStartup="true" id="TradeImport" handleFault="true" >
+			<camel:from ref="" ></camel:from>
 			<camel:from id="TradeImportFile" uri="file:c:/temp/tradein?idempotent=true&amp;filter=#FileImportAntFilter&amp;idempotentRepository=#fileImportIdempotentRepository&amp;delay=5000&amp;delete=true" />
 			<!-- <camel:from id="TradeImportFile" uri="file:/tmp/tradein?idempotent=true&amp;filter=#FileImportAntFilter&amp;idempotentRepository=#fileImportIdempotentRepository&amp;delay=5000&amp;delete=true" /> -->								
 			<camel:transacted id="FileImporterTransaction" ref="requiredTx" />
