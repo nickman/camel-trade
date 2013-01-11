@@ -2,7 +2,7 @@
  * Helios, OpenSource Monitoring
  * Brought to you by the Helios Development Group
  *
- * Copyright 2013, Helios Development Group and individual contributors
+ * Copyright 2007, Helios Development Group and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -22,41 +22,36 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org. 
  *
  */
-package org.tradex.tx;
+package org.tradex.jms;
 
-import javax.transaction.xa.XAResource;
+import javax.jms.Message;
+import javax.jms.MessageListener;
 
 import org.apache.log4j.Logger;
+import org.tradex.tx.DumpTransaction;
+import org.tradex.util.Banner;
 
 /**
- * <p>Title: DumpTransaction</p>
- * <p>Description: Dumps the current transaction data</p> 
+ * <p>Title: LoggingJMSListener</p>
+ * <p>Description: </p> 
  * <p>Company: Helios Development Group LLC</p>
  * @author Whitehead (nwhitehead AT heliosdev DOT org)
- * <p><code>org.tradex.tx.DumpTransaction</code></p>
+ * <p><code>org.tradex.jms.LoggingJMSListener</code></p>
  */
 
-public class DumpTransaction {
-	/** The instance logger */
-	protected static final Logger log = Logger.getLogger(DumpTransaction.class);
-	
+public class LoggingJMSListener implements MessageListener {
+	/** Instance logger */
+	protected final Logger log = Logger.getLogger(getClass());
+
 	/**
-	 * Logs current transaction data
+	 * {@inheritDoc}
+	 * @see javax.jms.MessageListener#onMessage(javax.jms.Message)
 	 */
-	public static void dumpTx() {
-		StringBuilder b = new StringBuilder("\nTransaction Dump:");
-		b.append("\n\tTX Status:").append(TransactionHelper.getTransactionState());
-		b.append("\n\tTX UID:").append(TransactionHelper.getTransactionUID());
-		b.append("\n\tXA Resources:");
-		for(XAResource xar : TransactionHelper.getTransactionResources().keySet()) {
-			b.append("\n\t\t[").append(xar.getClass().getName()).append("]:").append(xar);
-		}
-		b.append("\n===================");
-		log.info(b);
+	@Override
+	public void onMessage(Message message) {
+		log.info(Banner.banner("JMS Message", message.toString()));
+		DumpTransaction.dumpTx();
+		
 	}
-	
-	// org.apache.geronimo.transaction.manager.WrapperNamedXAResource
-	// XAResource xaResource
-	// String name
-	
+
 }

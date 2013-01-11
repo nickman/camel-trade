@@ -27,9 +27,13 @@ package org.tradex.camel.endpoint.file;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.management.ObjectName;
+import javax.sql.DataSource;
+
 import org.apache.camel.CamelContext;
 import org.apache.camel.CamelContextAware;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.model.FromDefinition;
 import org.apache.camel.model.RouteDefinition;
 import org.apache.camel.spi.IdempotentRepository;
 import org.apache.log4j.Logger;
@@ -37,6 +41,8 @@ import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.support.GenericApplicationContext;
+import org.tradex.jmx.JMXHelper;
 
 /**
  * <p>Title: FilePollerEndpoint</p>
@@ -53,18 +59,23 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 	protected ApplicationContext applicationContext = null;
 	/** The spring bean name */
 	protected String beanName = null;
+	/** The idempotent repository data source */
+	protected DataSource dataSource = null;
+	
 	/** The file poll delay */
 	protected long delay = DEFAULT_DELAY;
 	/** A map defining the file pollers to be implemented. The key is the directory to poll from, the value is the regex to match file names */
 	protected final Map<String, String> filePollers = new ConcurrentHashMap<String, String>();
+	/** The idempotent repositories created for each directory */
+	protected final Map<String, IdempotentRepository<?>> idempotentRepositories = new ConcurrentHashMap<String, IdempotentRepository<?>>();
 	/** The suffix appended to the file poller directories to create the fault directory where failed files are moved to */
 	/** Indicates if Camel should delete the file after processing */
 	protected boolean deleteFiles = true;
 	/** Indicates if if an idempotent repository should be used */
 	protected boolean useIdempotentRepo = true;
+	/** The uri of the endpoint that polled file exchanges should be forwarded to */
+	protected String targetEndpointUri = null;
 	
-	/** The discovered bean name of the idempotent repository prototype */
-	protected String idempotentFactoryName = null;
 	
 	
 	/** Instance logger */
@@ -86,8 +97,8 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 			"delete=%s";
 	
 	/** A string template to define a file poller URI using an idempotent repository */
-	public static final String IDEMPOTENT_FILE_POLLER_TEMPLATE = FILE_POLLER_TEMPLATE + 
-			"idempotentRepository=#%s" +
+	public static final String IDEMPOTENT_FILE_POLLER_TEMPLATE = FILE_POLLER_TEMPLATE + "&" + 
+			"idempotentRepository=#%s&" +
 			"idempotent=true";
 	
 	
@@ -97,15 +108,79 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 	 */
 	@Override
 	public void configure() throws Exception {
+		
 		RouteDefinition rd = new RouteDefinition();
+		rd.id("FilePollerRoute");
 		StringBuilder filePollerMsg = new StringBuilder("\nFile Poller URIs");
 		for(Map.Entry<String, String> entry: filePollers.entrySet()) {
-			String uri = String.format(FILE_POLLER_TEMPLATE, entry.getKey(), entry.getValue(), delay);
-			rd.from(uri);
+			String uri = null;
+			if(useIdempotentRepo) {
+				String repoName = buildIdempotentRepository(entry.getKey());
+				uri = String.format(IDEMPOTENT_FILE_POLLER_TEMPLATE, entry.getKey(), entry.getValue(), delay, deleteFiles, repoName);
+			} else {
+				uri = String.format(FILE_POLLER_TEMPLATE, entry.getKey(), entry.getValue(), delay, deleteFiles);
+			}
+			rd.from(uri).id("PolledDir[" + entry.getKey() + "]").setAutoStartup("true");
+			this.configureRoute(rd);
 			filePollerMsg.append("\n\t").append(uri);			
 		}
 		log.info(filePollerMsg);
+		rd.to(targetEndpointUri).id("FileImportForwarder");
+		rd.setAutoStartup("true");
+		//this.setRouteCollection(rd.);
+		//addRoutesToCamelContext(camelContext);
+		log.info("Added From Directory");
+		for(FromDefinition fd: rd.getInputs()) {
+			log.info("From Def:" + fd);
+		}
+		log.info("Forwarding to [" + targetEndpointUri + "]");
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
+	 */
+	@Override
+	public void afterPropertiesSet() throws Exception {
+//		camelContext.addRoutes(this);
+//		camelContext.stop();
+//		camelContext.start();
 		
+		
+		//camelContext.startRoute("FilePollerRoute");		
+	}
+	
+	
+	/**
+	 * Builds and registers an idempotent repository for the passed directory name
+	 * @param directoryName The directory name files are being polled from
+	 * @return The bean name of the idempotent repository
+	 */
+	protected String buildIdempotentRepository(String directoryName) {
+		String idempotentFactoryName = null;
+		String[] repoNames = applicationContext.getBeanNamesForType(IdempotentRepository.class, true, false);
+		if(repoNames.length==0) {
+			throw new RuntimeException("No IdempotentRepository Bean Found", new Throwable());
+		}
+		for(String repoName : repoNames) {
+			if(applicationContext.isPrototype(repoName)) {
+				idempotentFactoryName = repoName;
+				break;
+			}
+		}
+		if(idempotentFactoryName==null) {
+			throw new RuntimeException("No IdempotentRepository Prototype Bean Found", new Throwable());
+		}
+		String generatedId = directoryName.replace('/', '_').replace('\\', '_').replace(':', '_');
+		ObjectName on = JMXHelper.objectName("org.tradex.idempotent:service=IdempotentRepository,name=" + generatedId);
+		IdempotentRepository<?> repository = (IdempotentRepository<?>) applicationContext.getBean(idempotentFactoryName, dataSource, generatedId, on);
+		((GenericApplicationContext)applicationContext).getBeanFactory().registerSingleton(generatedId, repository);
+		//((GenericApplicationContext)applicationContext).getBeanFactory().configureBean(repository, generatedId);
+		
+		
+		idempotentRepositories.put(directoryName, repository);
+		log.info("Created and registered Idempotent Repository [" + generatedId + "]");
+		return generatedId;
 	}
 	
 
@@ -131,29 +206,6 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 
 
 
-	/**
-	 * {@inheritDoc}
-	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
-	 */
-	@Override
-	public void afterPropertiesSet() throws Exception {
-		if(useIdempotentRepo) {
-			// idempotentFactoryName
-			String[] repoNames = applicationContext.getBeanNamesForType(IdempotentRepository.class, true, false);
-			if(repoNames.length==0) {
-				throw new Exception("No IdempotentRepository Bean Found", new Throwable());
-			}
-			for(String repoName : repoNames) {
-				if(applicationContext.isPrototype(repoName)) {
-					idempotentFactoryName = repoName;
-					break;
-				}
-			}
-			if(idempotentFactoryName==null) {
-				idempotentFactoryName = repoNames[0];
-			}
-		}
-	}
 
 
 
@@ -174,6 +226,94 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 	@Override
 	public void setBeanName(String beanName) {
 		this.beanName = beanName;
+	}
+
+	/**
+	 * Returns the file poll delay in ms.
+	 * @return the file poll delay in ms.
+	 */
+	public long getDelay() {
+		return delay;
+	}
+
+	/**
+	 * Sets the file poll delay in ms.
+	 * @param delay the file poll delay in ms.
+	 */
+	public void setDelay(long delay) {
+		this.delay = delay;
+	}
+
+	/**
+	 * Indicates if the file pollers should use an idempotent repository
+	 * @return true if the file pollers should use an idempotent repository, false otherwise
+	 */
+	public boolean isUseIdempotentRepo() {
+		return useIdempotentRepo;
+	}
+
+	/**
+	 * Sets if the file pollers should use an idempotent repository
+	 * @param useIdempotentRepo true to use an idempotent repository, false otherwise
+	 */
+	public void setUseIdempotentRepo(boolean useIdempotentRepo) {
+		this.useIdempotentRepo = useIdempotentRepo;
+	}
+
+	/**
+	 * Returns the URI of the endpoint that polled files should be forwarded to
+	 * @return the URI of the endpoint that polled files should be forwarded to
+	 */
+	public String getTargetEndpointUri() {
+		return targetEndpointUri;
+	}
+
+	/**
+	 * Sets the URI of the endpoint that polled files should be forwarded to
+	 * @param targetEndpointUri the URI of the endpoint that polled files should be forwarded to
+	 */
+	public void setTargetEndpointUri(String targetEndpointUri) {
+		this.targetEndpointUri = targetEndpointUri;
+	}
+
+	/**
+	 * Returns a map of the configured file pollers
+	 * @return a map of the configured file pollers
+	 */
+	public Map<String, String> getFilePollers() {
+		return filePollers;
+	}
+	
+	/**
+	 * Adds the passed map to this bean's file poller map
+	 * @param pollers A map of file pollers where the key is the directory and the value is the file name pattern
+	 */
+	public void setFilePollers(Map<String, String> pollers) {
+		filePollers.putAll(pollers);
+	}
+
+	/**
+	 * Sets the data source bean name to use if idempotent repositories are being used
+	 * @param dataSource the data source bean name to use if idempotent repositories are being used
+	 */
+	public void setDataSource(DataSource dataSource) {
+		this.dataSource = dataSource;
+	}
+
+	/**
+	 * Sets the deletion policy for polled files
+	 * @param deleteFiles true to delete polled files on completion, false otherwise
+	 */
+	public void setDeleteFiles(boolean deleteFiles) {
+		this.deleteFiles = deleteFiles;
+	}
+	
+	/**
+	 * Indicates if complete polled files are deleted
+	 * @return true if complete polled files are deleted, false otherwise
+	 */
+	public boolean isDeleteFiles() {
+		return deleteFiles;
 	}
 
 }

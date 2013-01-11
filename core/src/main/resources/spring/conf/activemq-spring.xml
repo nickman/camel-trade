@@ -59,18 +59,95 @@
     	
   	</amq:broker>
   	
-  	<amq:xaConnectionFactory id="xaConnectionFactory" brokerURL="vm://tradex?create=false" statsEnabled="true" ></amq:xaConnectionFactory>
+  	<amq:xaConnectionFactory id="xaConnectionFactory" brokerURL="vm://tradex?create=false" statsEnabled="true" clientID="tradexSub" ></amq:xaConnectionFactory>
+  	
+  	<bean id="bootstrapContext" class="org.springframework.jca.support.SimpleBootstrapContext">
+  		<constructor-arg type="javax.resource.spi.work.WorkManager" >
+  			<bean id="taskWorkManager" class="org.springframework.jca.work.SimpleTaskWorkManager" />
+  		</constructor-arg>
+  		<constructor-arg type="javax.resource.spi.XATerminator">
+  			<bean id="" class="com.arjuna.ats.internal.jta.transaction.arjunacore.jca.XATerminatorImple"/>
+   		</constructor-arg>
+  	</bean>
   	
 	<bean id="amqConnectionFactory" class="org.jencks.amqpool.XaPooledConnectionFactory" depends-on="tradexAmqBroker">
     	<constructor-arg value="vm://tradex?create=false" />
-    	<property name="maxConnections" value="8" />
-    	<property name="transactionManager" ref="jbossTransactionManager" />
-    	
+    	<property name="maxConnections" value="8" />    	
+    	<property name="transactionManager" ref="jbossTransactionManager" />    	
   	</bean>
+  	
+  	
 
+  	
+ 
+	<bean id="activemqJca" class="org.jencks.JCAContainer">	  
+	  <property name="threadPoolSize" value="8"/>
+	  <property name="resourceAdapter">
+	    <bean id="activeMQResourceAdapter" class="org.apache.activemq.ra.ActiveMQResourceAdapter">
+	      <property name="serverUrl" value="vm://tradex?create=false"/>
+	      <property name="connectionFactory" ref="xaConnectionFactory" />
+	    </bean>
+	  </property>
+	  <property name="bootstrapContext" ref="bootstrapContext"></property>	  
+	</bean>
+
+	<!-- 
+	<bean id="inboundConnector" class="org.jencks.JCAConnector" depends-on="LoggingJMSListener">	
+	  <property name="jcaContainer" ref="activemqJca"/>	
+	  <property name="activationSpec">
+	    <bean class="org.apache.activemq.ra.ActiveMQActivationSpec">
+	      <property name="destination" value="tradex.bus"/>
+	      <property name="destinationType" value="javax.jms.Topic"/>
+	      <property name="clientId" value="tradexSub"/>
+	      <property name="subscriptionName" value="clearingBus"/>
+	      <property name="noLocal" value="true"/>
+	      <property name="subscriptionDurability" value="Durable"/>
+	    </bean>
+	  </property>
+	  <property name="transactionManager" ref="jbossTransactionManager"/>
+	  <property name="ref" value="LoggingJMSListener"/>
+	</bean>
+	-->	
+
+ 
+ 
+ 	  	
+	<!-- 
+	<bean id="inboundConnector" class="org.tradex.tx.GenericJCAConnector" depends-on="LoggingJMSListener">	
+	  <property name="jcaContainer" ref="activemqJca"/>	
+	  <property name="activationSpec">
+	    <bean class="org.apache.activemq.ra.ActiveMQActivationSpec">
+	      <property name="destination" value="tradex.bus"/>
+	      <property name="destinationType" value="javax.jms.Topic"/>
+	    </bean>
+	  </property>
+	  <property name="transactionManager" ref="jbossTransactionManager"/>
+	  <property name="ref" value="LoggingJMSListener"/>
+	</bean>	
+	
+	<bean id="activemqJca" class="org.tradex.tx.GenericJCAContainer">	  
+	  <property name="threadPoolSize" value="8"/>
+	  <property name="resourceAdapter">
+	    <bean id="activeMQResourceAdapter" class="org.apache.activemq.ra.ActiveMQResourceAdapter">
+	      <property name="serverUrl" value="vm://tradex?create=false"/>
+	    </bean>
+	  </property>
+	  <property name="workManager">
+	  	<bean id="amqWorkManager" class="org.springframework.jca.work.SimpleTaskWorkManager" />
+	  </property>
+	  <property name="xaTerminator">
+	  	<bean id="amqXaTerminator" class="com.arjuna.ats.internal.jta.transaction.arjunacore.jca.XATerminatorImple"/>
+	  </property>	  
+	  <property name="transactionManager" ref="jbossTransactionManager" />
+	</bean>
+	-->
+	
+  	
+	<bean id="LoggingJMSListener" class="org.tradex.jms.LoggingJMSListener"/>
   	
   	<amq:queue id="tradex.OUT" name="tradex.OUT" physicalName="tradex.OUT" />
   	<amq:queue id="tradex.IN" name="tradex.IN" physicalName="tradex.IN" />
+  	<amq:topic id="tradex.broadcast" name="tradex.bus" physicalName="tradex.bus"  />
   	
   	
 	<!-- 

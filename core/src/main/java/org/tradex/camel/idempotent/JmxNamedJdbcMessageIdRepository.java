@@ -48,18 +48,17 @@ public class JmxNamedJdbcMessageIdRepository extends JdbcMessageIdRepository imp
 	/**
 	 * Creates a new JmxNamedJdbcMessageIdRepository
 	 */
-	public JmxNamedJdbcMessageIdRepository() {
-		super();
-	}
+	public JmxNamedJdbcMessageIdRepository() { }
 
 	/**
 	 * Creates a new JmxNamedJdbcMessageIdRepository
 	 * @param dataSource The JDBC data source
 	 * @param processorName The processor name
+	 * @param objectName The designated JMX ObjectName
 	 */
-	public JmxNamedJdbcMessageIdRepository(DataSource dataSource,
-			String processorName) {
+	public JmxNamedJdbcMessageIdRepository(DataSource dataSource, String processorName, ObjectName objectName) {
 		super(dataSource, processorName);
+		this.objectName = objectName;
 	}
 
 	/**

@@ -153,6 +153,10 @@ public class TransactionHelper {
 	/** An atomic reference to cache the TransactionManager */
 	protected static final AtomicReference<TransactionManager> TX_MANAGER = new AtomicReference<TransactionManager>(null);
 	
+	public static void getXATerminator() {
+		
+	}
+	
 	/**
 	 * Returns the containers transaction manager
 	 * @return the JTA transaction manager
