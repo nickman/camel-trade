@@ -18,19 +18,24 @@
        http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd
        http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang.xsd
        "  >
+
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" >
+		<property name="systemPropertiesMode" value="2" />
+		<property name="valueSeparator" value=":" />
+	</bean>
 	
 	<bean id="FilePollerEndpoint" class="org.tradex.camel.endpoint.file.FilePollerEndpoint">
 		<property name="filePollers">
 			<util:map>
-				<entry key="/tmp/tradein" value=".*.csv" />
-				<entry key="/tmp/isinsin" value=".*.csv" />
+				<entry key="${java.io.tmpdir}/tradein" value=".*.csv" />
+				<entry key="${java.io.tmpdir}/isinsin" value=".*.csv" />
 			</util:map>
 		</property>
 		<property name="dataSource" ref="primaryDataSource" />
 		<property name="delay" value="500" />
 		<property name="deleteFiles" value="true" />
 		<property name="useIdempotentRepo" value="true" />
-		<property name="targetEndpointUri" value="direct:TradeImportEntryPoint" />
+		<property name="targetEndpointUri" value="direct:TradesImportEntryPoint" />
 		<property name="completionEndpointUri" value="direct:handleTradeComplete" />		
 		<property name="exceptionEndpointUri" value="direct:handleTradeException" />
 		<property name="exceptionHandlerTriggers">
@@ -71,7 +76,12 @@
 	 <bean id="aggregatorStrategy" class="org.tradex.camel.aggregator.TradeImportAggregator"/>
 	
 	<bean id="txDumper" class="org.tradex.tx.DumpTransaction" />
+
+		<camel:errorHandler id="TradeImportErrorHandler" type="DeadLetterChannel" deadLetterUri="direct:handleTradeException" useOriginalMessage="true" >
+			<camel:redeliveryPolicy maximumRedeliveries="0"/>
+		</camel:errorHandler>
 	
+		
 	<camelContext xmlns="http://camel.apache.org/schema/spring" trace="false" id="TradexContext" autoStartup="true"  >
 		<!-- 
 		<camel:errorHandler id="TradexImportErrorHandler" type="DeadLetterChannel" deadLetterUri="direct:handleTradeError" useOriginalMessage="true"  >			
@@ -79,7 +89,7 @@
 		</camel:errorHandler>
 		-->
 			
-		
+				
 		
 		<camel:threadPoolProfile id="FileImportThreadPool" poolSize="5"  maxPoolSize="10" maxQueueSize="1000" >
 			<camel:description>Trade Import Thread Pool</camel:description>
@@ -90,21 +100,30 @@
 			
 			
 		
-		<camel:route autoStartup="true" id="TradeImport" handleFault="true" >
+		<camel:route autoStartup="true" id="TradeImportSplit" handleFault="true" >
+			<camel:from id="TradesImportEntryPoint" uri="direct:TradesImportEntryPoint" />
+			<camel:split streaming="true">
+				<tokenize token="\n"/>
+				<camel:to id="ProcessTrade" uri="direct:TradeImportEntryPoint" />	
+			</camel:split>	
+		</camel:route>
+		
+		
+		<camel:route autoStartup="true" id="TradeImport" handleFault="true" errorHandlerRef="TradeImportErrorHandler" >
+			
 			<camel:from id="TradeImportEntryPoint" uri="direct:TradeImportEntryPoint" />
-			<!-- <camel:from id="SedaFileImport" uri="seda:fileImport?concurrentConsumers=5&amp;blockWhenFull=true" /> -->
+			
 			<camel:transacted id="FileImporterTransaction" ref="requiredTx" />
 			<unmarshal id="TradeImportUnmarshaller" ref="TradexCSVFormat" />
 			<camel:setHeader headerName="CamelTradeCount">
 				<camel:simple>${body.size}</camel:simple>				
 			</camel:setHeader>					    
-			<camel:split streaming="true" id="TradeImportSplit">				
-				<camel:method bean="olu" method="split" id="TradeImportSplitter" />
-																
+			<camel:split streaming="false" id="UnmarshalledTradeSplit">							
+				<camel:method bean="olu" method="split" id="TradeImportSplitter" />																
 				<camel:bean id="TradeValidation"  ref="TradeValidator" method="validateTrade"  />
 				<camel:process id="TradeEnricher" ref="tradeEnricher" />	
-				<camel:to ref="TradexHibernate" />
-				<camel:marshal>					
+				<camel:to uri="hibernate://tradex" id="TradexHibernatePersistor" />
+				<camel:marshal id="JAXBTradeMarshaller" >					
 		        	<camel:jaxb prettyPrint="true" encoding="iso-8859-1" contextPath="org.tradex.domain.trade"/>		        		
 		       	</camel:marshal>	 
 				<camel:to id="activemq-queue" uri="activemq:queue:tradex.OUT" />													
@@ -113,22 +132,37 @@
 			</camel:split>			
 			<camel:onCompletion useOriginalMessage="true" onCompleteOnly="true" >				
 				<camel:to uri="direct:handleTradeComplete" />
-			</camel:onCompletion>			
+			</camel:onCompletion>
+			<!-- 
+			<camel:onException useOriginalMessage="false" >
+				<camel:exception>java.lang.Throwable</camel:exception>
+				<camel:redeliveryPolicy  useCollisionAvoidance="true"  maximumRedeliveries="0"  retriesExhaustedLogLevel="ERROR" />		
+				<camel:to uri="log:test.org.tradex.import.PARSE.error?level=ERROR&amp;showException=true&amp;showBody=true&amp;showBodyType=true&amp;showHeaders=true&amp;showProperties=true&amp;multiline=true&amp;showStackTrace=false" />
+				<camel:to uri="direct:handleTradeException" ></camel:to>
+			</camel:onException>
+			-->
 		</camel:route>
+		
 		
 		
 		<route autoStartup="true" id="TradeImportCompletionHandler">
 			<camel:from id="DirectTradeCompletionHandler" uri="direct:handleTradeComplete" />
-			<marshal id="CompleteTradeImportMarshaller" ref="TradexCSVFormat" />
-			<camel:to id="TradeDoneDirectory" uri="file:/tmp/tradein/.done/?fileExist=Append" />
+			<camel:setBody>
+				<camel:simple>${body}\n</camel:simple>
+			</camel:setBody>			
+			<camel:to id="TradeDoneDirectory" uri="file:/c:/temp/tradein/.done/?fileExist=Append" />
+			<camel:to uri="log:test.org.tradex.import.complete?level=INFO&amp;showAll=true&amp;multiline=true" />
+			
 		</route>
 		
-		<route autoStartup="true" id="TradeImportExceptionHandler">
+		<route autoStartup="true" id="TradeImportExceptionHandler" handleFault="true">
 			<camel:from id="DirectTradeExceptionHandler" uri="direct:handleTradeException" />
-			<marshal id="FailedTradeImportMarshaller" ref="TradexCSVFormat" />
-			<camel:to uri="log:test.org.tradex.import.error?level=ERROR&amp;showAll=true&amp;multiline=true" />
+			<!-- <marshal id="FailedTradeImportMarshaller" ref="TradexCSVFormat" /> -->
+			<camel:to uri="log:test.org.tradex.import.HANDLE.error?level=ERROR&amp;showException=true&amp;showBody=true&amp;showBodyType=true&amp;showHeaders=true&amp;showProperties=true&amp;multiline=true&amp;showStackTrace=false" />
+			<camel:to id="DLQWriter" uri="file:/c:/temp/tradein/.dlq?fileExist=Append" />
 		</route>
-		
+	
+			
 		
 	</camelContext>
 	

@@ -24,6 +24,7 @@
  */
 package org.tradex.camel.endpoint.file;
 
+import java.io.File;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,7 +34,8 @@ import javax.sql.DataSource;
 import org.apache.camel.CamelContext;
 import org.apache.camel.CamelContextAware;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.model.RouteDefinition;
+import org.apache.camel.component.file.FileEndpoint;
+import org.apache.camel.impl.DefaultRoute;
 import org.apache.camel.spi.IdempotentRepository;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.BeanNameAware;
@@ -114,7 +116,7 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 	 */
 	@Override
 	public void configure() throws Exception {
-		
+		errorHandler(deadLetterChannel(exceptionEndpointUri).log("WTF ????"));
 		StringBuilder filePollerMsg = new StringBuilder("\nFile Poller URIs");
 		for(Map.Entry<String, String> entry: filePollers.entrySet()) {
 			String uri = null;
@@ -125,18 +127,22 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 				uri = String.format(FILE_POLLER_TEMPLATE, entry.getKey(), entry.getValue(), delay, deleteFiles);
 			}
 			
-			this.getRouteCollection().id("FILEPOLLER");
 			
 			
-			from(uri).id("File Poller [" + entry.getKey() + "]").to(targetEndpointUri)
-			.onCompletion().to(completionEndpointUri).end()
-			.onException(exceptionHandlerTriggers).to(exceptionEndpointUri).end();
+			from(uri).routeId("FilePollerRoute")
+				.id("File Poller [" + entry.getKey() + "]")
+				.to(targetEndpointUri)
+					.id(beanName + "TargetEndpoint");
 			
-						
-			
-			
-			
-			
+//			.onCompletion()
+//				.id(beanName + "CompletionHandler")
+//				.to(completionEndpointUri)
+//					.id(beanName + "CompletionEndpoint")
+//			
+//			.onException(exceptionHandlerTriggers)
+//				.id(beanName + "ExceptionHandler")
+//				.to(exceptionEndpointUri)
+//					.id(beanName + "ExceptionEndpoint");
 			
 			filePollerMsg.append("\n\t").append(uri);			
 		}
@@ -149,15 +155,7 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 	 */
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		
-		
-		
 		camelContext.addRoutes(this);
-//		camelContext.stop();
-//		camelContext.start();
-		
-		
-		//camelContext.startRoute("FilePollerRoute");		
 	}
 	
 	
