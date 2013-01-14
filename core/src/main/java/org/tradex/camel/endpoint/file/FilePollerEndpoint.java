@@ -33,7 +33,6 @@ import javax.sql.DataSource;
 import org.apache.camel.CamelContext;
 import org.apache.camel.CamelContextAware;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.model.FromDefinition;
 import org.apache.camel.model.RouteDefinition;
 import org.apache.camel.spi.IdempotentRepository;
 import org.apache.log4j.Logger;
@@ -75,6 +74,13 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 	protected boolean useIdempotentRepo = true;
 	/** The uri of the endpoint that polled file exchanges should be forwarded to */
 	protected String targetEndpointUri = null;
+	/** The uri of the endpoint that successfully completed polled file exchanges should be forwarded to */
+	protected String completionEndpointUri = null;
+	/** The uri of the endpoint that polled file exchanges that resulted in an exception should be forwarded to */
+	protected String exceptionEndpointUri = null;
+	/** The throwable classes that will trigger this route's exception handler. Defaults to <b><code>{ {@link Throwable} }</code></b> */
+	@SuppressWarnings("unchecked")
+	protected Class<? extends Throwable>[] exceptionHandlerTriggers = new Class[]{Throwable.class};
 	
 	
 	
@@ -91,7 +97,7 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 	}
 	
 	/** A string template to define a file poller URI without an idempotent repository */
-	public static final String FILE_POLLER_TEMPLATE = "file://%s?" + 
+	public static final String FILE_POLLER_TEMPLATE = "file:%s?" + 
 			"include=%s&" + 
 			"delay=%s&" +
 			"delete=%s";
@@ -109,8 +115,6 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 	@Override
 	public void configure() throws Exception {
 		
-		RouteDefinition rd = new RouteDefinition();
-		rd.id("FilePollerRoute");
 		StringBuilder filePollerMsg = new StringBuilder("\nFile Poller URIs");
 		for(Map.Entry<String, String> entry: filePollers.entrySet()) {
 			String uri = null;
@@ -120,20 +124,23 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 			} else {
 				uri = String.format(FILE_POLLER_TEMPLATE, entry.getKey(), entry.getValue(), delay, deleteFiles);
 			}
-			rd.from(uri).id("PolledDir[" + entry.getKey() + "]").setAutoStartup("true");
-			this.configureRoute(rd);
+			
+			this.getRouteCollection().id("FILEPOLLER");
+			
+			
+			from(uri).id("File Poller [" + entry.getKey() + "]").to(targetEndpointUri)
+			.onCompletion().to(completionEndpointUri).end()
+			.onException(exceptionHandlerTriggers).to(exceptionEndpointUri).end();
+			
+						
+			
+			
+			
+			
+			
 			filePollerMsg.append("\n\t").append(uri);			
 		}
 		log.info(filePollerMsg);
-		rd.to(targetEndpointUri).id("FileImportForwarder");
-		rd.setAutoStartup("true");
-		//this.setRouteCollection(rd.);
-		//addRoutesToCamelContext(camelContext);
-		log.info("Added From Directory");
-		for(FromDefinition fd: rd.getInputs()) {
-			log.info("From Def:" + fd);
-		}
-		log.info("Forwarding to [" + targetEndpointUri + "]");
 	}
 	
 	/**
@@ -142,7 +149,10 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 	 */
 	@Override
 	public void afterPropertiesSet() throws Exception {
-//		camelContext.addRoutes(this);
+		
+		
+		
+		camelContext.addRoutes(this);
 //		camelContext.stop();
 //		camelContext.start();
 		
@@ -314,6 +324,54 @@ public class FilePollerEndpoint extends RouteBuilder implements BeanNameAware, A
 	 */
 	public boolean isDeleteFiles() {
 		return deleteFiles;
+	}
+
+	/**
+	 * Returns the uri of the endpoint that polled file exchanges that resulted in an exception should be forwarded to 
+	 * @return the uri of the endpoint that polled file exchanges that resulted in an exception should be forwarded to 
+	 */
+	public String getCompletionEndpointUri() {
+		return completionEndpointUri;
+	}
+
+	/**
+	 * Sets the uri of the endpoint that polled file exchanges that resulted in an exception should be forwarded to
+	 * @param completionEndpointUri the uri of the endpoint that polled file exchanges that resulted in an exception should be forwarded to
+	 */
+	public void setCompletionEndpointUri(String completionEndpointUri) {
+		this.completionEndpointUri = completionEndpointUri;
+	}
+
+	/**
+	 * Returns the uri of the endpoint that successful polled file exchanges should be forwarded to
+	 * @return the uri of the endpoint that successful polled file exchanges should be forwarded to
+	 */
+	public String getExceptionEndpointUri() {
+		return exceptionEndpointUri;
+	}
+
+	/**
+	 * Sets the uri of the endpoint that successful polled file exchanges should be forwarded to
+	 * @param exceptionEndpointUri the uri of the endpoint that successful polled file exchanges should be forwarded to
+	 */
+	public void setExceptionEndpointUri(String exceptionEndpointUri) {
+		this.exceptionEndpointUri = exceptionEndpointUri;
+	}
+
+	/**
+	 * Returns an array of the throwable classes that will trigger this route's exception handler. Defaults to <b><code>{ {@link Throwable} }</code></b>
+	 * @return the throwable classes that will trigger this route's exception handler. Defaults to <b><code>{ {@link Throwable} }</code></b>
+	 */
+	public Class<? extends Throwable>[] getExceptionHandlerTriggers() {
+		return exceptionHandlerTriggers;
+	}
+
+	/**
+	 * Sets the array of the throwable classes that will trigger this route's exception handler. Defaults to <b><code>{ {@link Throwable} }</code></b>
+	 * @param exceptionHandlerTriggers the throwable classes that will trigger this route's exception handler. Defaults to <b><code>{ {@link Throwable} }</code></b>
+	 */
+	public void setExceptionHandlerTriggers(Class<? extends Throwable>[] exceptionHandlerTriggers) {
+		this.exceptionHandlerTriggers = exceptionHandlerTriggers;
 	}
 
 }

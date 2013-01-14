@@ -18,6 +18,7 @@
 	<import resource="hibernate-spring.xml" />
 	<import resource="camel-spring.xml" />
 	<import resource="activemq-spring.xml" />
+	<!-- <import resource="hornetq-spring.xml" /> -->
 	
 	
 	<!-- <import resource="jms-spring.xml" />  -->				<!--  Comment this to test with MQ -->

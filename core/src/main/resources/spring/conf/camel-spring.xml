@@ -18,25 +18,28 @@
        http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd
        http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang.xsd
        "  >
-
-	<bean id="traceFormatter" class="org.apache.camel.processor.interceptor.DefaultTraceFormatter">
-		<property name="showProperties" value="true"/>
-		<property name="showHeaders" value="true"/>
-		<property name="showRouteId" value="true" />
-	</bean>
-
-	<util:map id="FilePollerConfig">
-		<entry key="/tmp/tradein" value=".*\\.csv" />
-	</util:map>
 	
 	<bean id="FilePollerEndpoint" class="org.tradex.camel.endpoint.file.FilePollerEndpoint">
-		<property name="filePollers" ref="FilePollerConfig" />
+		<property name="filePollers">
+			<util:map>
+				<entry key="/tmp/tradein" value=".*.csv" />
+				<entry key="/tmp/isinsin" value=".*.csv" />
+			</util:map>
+		</property>
 		<property name="dataSource" ref="primaryDataSource" />
 		<property name="delay" value="500" />
-		<property name="deleteFiles" value="false" />
+		<property name="deleteFiles" value="true" />
 		<property name="useIdempotentRepo" value="true" />
-		<property name="targetEndpointUri" value="seda:fileImport" />		
-	</bean>	
+		<property name="targetEndpointUri" value="direct:TradeImportEntryPoint" />
+		<property name="completionEndpointUri" value="direct:handleTradeComplete" />		
+		<property name="exceptionEndpointUri" value="direct:handleTradeException" />
+		<property name="exceptionHandlerTriggers">
+			<array>
+				<value>java.lang.Throwable</value>
+			</array>
+		</property>
+	</bean>
+	
 	  
 	<bean name="fileImportIdempotentRepositoryFactory" class="org.tradex.camel.idempotent.JmxNamedJdbcMessageIdRepository" scope="prototype" >
 		<property name="objectName" value="org.tradex.idempotent:service=Prototype" />
@@ -76,7 +79,7 @@
 		</camel:errorHandler>
 		-->
 			
-		<camel:routeBuilder ref="FilePollerEndpoint"/>
+		
 		
 		<camel:threadPoolProfile id="FileImportThreadPool" poolSize="5"  maxPoolSize="10" maxQueueSize="1000" >
 			<camel:description>Trade Import Thread Pool</camel:description>
@@ -84,48 +87,48 @@
 		
 		<camel:endpoint id="TradexHibernate" uri="hibernate://tradex" />
 
-		<camel:onException id="TradeImportBusinessExceptionHandler" useOriginalMessage="true"  >
-			<camel:exception>org.tradex.domain.trade.TradeImportBusinessException</camel:exception>
-			<camel:redeliveryPolicy redeliveryDelay="3000" maximumRedeliveries="3" maximumRedeliveryDelay="15000" retryAttemptedLogLevel="WARN" retriesExhaustedLogLevel="ERROR" asyncDelayedRedelivery="true"  />
-			<camel:handled><camel:constant>true</camel:constant></camel:handled>
-			<camel:to uri="direct:handleTradeError" />					
-		</camel:onException>
-				
+			
+			
 		
 		<camel:route autoStartup="true" id="TradeImport" handleFault="true" >
-							
-			<!-- <camel:from id="SedaFileImport" uri="seda:fileImport" /> -->
+			<camel:from id="TradeImportEntryPoint" uri="direct:TradeImportEntryPoint" />
+			<!-- <camel:from id="SedaFileImport" uri="seda:fileImport?concurrentConsumers=5&amp;blockWhenFull=true" /> -->
 			<camel:transacted id="FileImporterTransaction" ref="requiredTx" />
 			<unmarshal id="TradeImportUnmarshaller" ref="TradexCSVFormat" />
 			<camel:setHeader headerName="CamelTradeCount">
 				<camel:simple>${body.size}</camel:simple>				
-			</camel:setHeader>
-			
-			<camel:to id="TradeImportLogger" uri="log:test.org.tradex.BEFORESPLIT?level=INFO&amp;showAll=true&amp;multiline=true" />		    
-			<camel:split streaming="true" id="TradeImportSplit">
+			</camel:setHeader>					    
+			<camel:split streaming="true" id="TradeImportSplit">				
 				<camel:method bean="olu" method="split" id="TradeImportSplitter" />
-												
+																
 				<camel:bean id="TradeValidation"  ref="TradeValidator" method="validateTrade"  />
-				<camel:process id="TradeEnricher" ref="tradeEnricher" />
-				<!-- <camel:to uri="activemq:queue:tradex.OUT?connectionFactory=jmsXaConnectionFactory&amp;transactionManager=#transactionManager&amp;transacted=true&amp;transactedInOut=true" /> -->
-				<camel:to uri="activemq:queue:tradex.OUT" />
-				<camel:to ref="TradexHibernate" />	
+				<camel:process id="TradeEnricher" ref="tradeEnricher" />	
+				<camel:to ref="TradexHibernate" />
+				<camel:marshal>					
+		        	<camel:jaxb prettyPrint="true" encoding="iso-8859-1" contextPath="org.tradex.domain.trade"/>		        		
+		       	</camel:marshal>	 
+				<camel:to id="activemq-queue" uri="activemq:queue:tradex.OUT" />													
 				
-									
-			</camel:split>
-			<camel:bean id="TXDumper" ref="txDumper" method="dumpTx" />
+				<!-- <camel:process id="TXDumper" ref="txDumper" /> -->
+			</camel:split>			
 			<camel:onCompletion useOriginalMessage="true" onCompleteOnly="true" >				
 				<camel:to uri="direct:handleTradeComplete" />
-			</camel:onCompletion>
-			
+			</camel:onCompletion>			
 		</camel:route>
 		
 		
 		<route autoStartup="true" id="TradeImportCompletionHandler">
 			<camel:from id="DirectTradeCompletionHandler" uri="direct:handleTradeComplete" />
 			<marshal id="CompleteTradeImportMarshaller" ref="TradexCSVFormat" />
-			<!-- <camel:to id="TradeDoneDirectory" uri="file:c:/temp/tradein/.done/?fileExist=Append" /> -->
+			<camel:to id="TradeDoneDirectory" uri="file:/tmp/tradein/.done/?fileExist=Append" />
 		</route>
+		
+		<route autoStartup="true" id="TradeImportExceptionHandler">
+			<camel:from id="DirectTradeExceptionHandler" uri="direct:handleTradeException" />
+			<marshal id="FailedTradeImportMarshaller" ref="TradexCSVFormat" />
+			<camel:to uri="log:test.org.tradex.import.error?level=ERROR&amp;showAll=true&amp;multiline=true" />
+		</route>
+		
 		
 	</camelContext>
 	
@@ -150,6 +153,13 @@
 		       		<to uri="log:jaxb"/>
 		       					
 				</camel:aggregate>														
+
+		<camel:onException id="TradeImportBusinessExceptionHandler" useOriginalMessage="true"  >
+			<camel:exception>org.tradex.domain.trade.TradeImportBusinessException</camel:exception>
+			<camel:redeliveryPolicy redeliveryDelay="3000" maximumRedeliveries="3" maximumRedeliveryDelay="15000" retryAttemptedLogLevel="WARN" retriesExhaustedLogLevel="ERROR" asyncDelayedRedelivery="true"  />
+			<camel:handled><camel:constant>true</camel:constant></camel:handled>
+			<camel:to uri="direct:handleTradeError" />					
+		</camel:onException>
 
 
  -->

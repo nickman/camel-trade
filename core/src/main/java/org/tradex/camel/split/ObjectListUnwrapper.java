@@ -55,7 +55,7 @@ public class ObjectListUnwrapper<T> {
 	 */
 	@SuppressWarnings("unchecked")
 	public List<T> split(ArrayList<Map<Object, Object>> list) {
-		log.info(dumpTxInfo());
+		//log.info(dumpTxInfo());
 		ArrayList<T> splits = new ArrayList<T>(list.size()); 
 		for(Map<Object, Object> m: list) {
 			for(Object obj: m.values()) {

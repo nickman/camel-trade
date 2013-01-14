@@ -175,6 +175,15 @@ public class TransactionHelper {
 		return tm;
 	}
 	
+	/**
+	 * Returns the containers transaction manager
+	 * @return the JTA transaction manager
+	 */
+	public TransactionManager transactionManager() {
+		return getTransactionManager();
+	}
+
+	
 	private static class TransactionManagerLocator {
 		public static TransactionManager locate() {
 			try {

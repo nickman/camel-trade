@@ -173,6 +173,12 @@
 		  <artifactId>xbean-spring</artifactId>
 		</dependency>
 		
+		<!--   
+		  =================================================================================
+		  Jencks JCA Dependencies
+		  =================================================================================
+		-->		
+		
 		<dependency>
 		  <groupId>org.jencks</groupId>
 		  <artifactId>jencks-amqpool</artifactId>
@@ -183,6 +189,43 @@
 		  <artifactId>jencks</artifactId>
 		</dependency>
 		
+			<!--   
+			  =================================================================================
+			  HornetQ Dependencies
+			  =================================================================================
+			-->
+		    <dependency>
+		      <groupId>org.hornetq</groupId>
+		      <artifactId>hornetq-ra</artifactId>
+		    </dependency>
+		    
+		    <dependency>
+		      <groupId>org.hornetq</groupId>
+		      <artifactId>hornetq-spring-integration</artifactId>
+		    </dependency>
+		    
+		    <dependency>
+		      <groupId>org.hornetq</groupId>
+		      <artifactId>hornetq-jms</artifactId>
+		    </dependency>
+
+		    <dependency>
+		      <groupId>org.hornetq</groupId>
+		      <artifactId>hornetq-jms-client</artifactId>
+		    </dependency>
+		    
+		    <dependency>
+		      <groupId>org.hornetq</groupId>
+		      <artifactId>hornetq-core</artifactId>
+		    </dependency>
+		    
+		    
+		    <dependency>
+		      <groupId>org.jboss.netty</groupId>
+		      <artifactId>netty</artifactId>
+		    </dependency>
+		    
+
 		
 		<!--   
 		  =================================================================================

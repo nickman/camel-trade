@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:jms="http://www.springframework.org/schema/jms"    
+       xmlns:hornetq="http://www.hornetq.org/schema/jms"
+       xsi:schemaLocation="       
+       http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms.xsd
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.hornetq.org/schema/jms /schema/hornetq-jms.xsd       
+       ">
+       
+       
+    <bean id="hornet" class="org.apache.camel.component.jms.JmsComponent">
+    	<property name="connectionFactory" ref="hornetXaConnectionFactory" />
+    	<property name="transactionManager" ref="transactionManager" />
+    	<property name="pubSubNoLocal" value="true" />    	
+    </bean>       
+       
+	<bean name="xmlConfiguration" class="org.hornetq.core.config.impl.FileConfiguration" init-method="start" destroy-method="stop">
+		<property name="configurationUrl" value="file:./src/main/resources/hornetq/conf/hornetq-configuration.xml" />
+	</bean>
+	
+	<bean name="hornetQSecurityManagerImpl" class="org.hornetq.spi.core.security.HornetQSecurityManagerImpl" />
+	
+	<!-- The core server -->
+	<bean name="hornetQServerImpl" class="org.hornetq.core.server.impl.HornetQServerImpl">
+	 <constructor-arg ref="xmlConfiguration" />
+	 <constructor-arg ref="MBeanServer" />
+	 <constructor-arg ref="hornetQSecurityManagerImpl" />
+	</bean>
+	
+	<!-- The JMS server -->
+	<bean name="jmsServerManagerImpl" class="org.hornetq.jms.server.impl.JMSServerManagerImpl" init-method="start" destroy-method="stop" >
+	 <constructor-arg ref="hornetQServerImpl" />
+	 <constructor-arg ref="hornetQJmsConfig" />
+	 
+	</bean>
+	
+	  <bean id="NettyTransportConfiguration" class="org.hornetq.api.core.TransportConfiguration">
+	   <constructor-arg value="org.hornetq.integration.transports.netty.NettyConnectorFactory" />
+	   <constructor-arg>
+	    <map key-type="java.lang.String" value-type="java.lang.Object">
+	     <entry key="port" value="5445"></entry>
+	    </map>
+	   </constructor-arg>
+	  </bean>
+	  
+	  <bean id="LocalTransportConfiguration" class="org.hornetq.api.core.TransportConfiguration">
+	   <constructor-arg value="org.hornetq.core.remoting.impl.invm.InVMConnectorFactory" />
+	   <constructor-arg><map /></constructor-arg>
+	  </bean>
+	  
+
+	
+	
+	<bean name="connectionFactory" class="org.hornetq.jms.client.HornetQXAConnectionFactory" >
+		<constructor-arg value="false" />
+		<constructor-arg ref="NettyTransportConfiguration" />
+	</bean>
+	
+	<bean name="localConnectionFactory" class="org.hornetq.jms.client.HornetQXAConnectionFactory" >
+		<constructor-arg value="false" />
+		<constructor-arg ref="LocalTransportConfiguration" />
+		<property name="blockOnDurableSend" value="false"/>
+		<property name="blockOnNonDurableSend" value="false"/>
+		<property name="clientID" value="tradex"/>		
+	</bean>
+
+	<bean name="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+	 <property name="connectionFactory" ref="connectionFactory" />
+	</bean>
+	
+	
+		
+	<bean id="hornetQJmsConfig" class="org.hornetq.jms.server.config.impl.JMSConfigurationImpl">
+	    <constructor-arg index="0">
+	      <list/>
+	    </constructor-arg>
+	    <!-- Queue configurations -->
+	    <constructor-arg index="1">
+	      <list>
+	        <bean class="org.hornetq.jms.server.config.impl.JMSQueueConfigurationImpl">
+	          <!-- Name -->
+	          <constructor-arg index="0" value="tradex"/>
+	          <!-- Selector -->
+	          <constructor-arg index="1"><null/></constructor-arg>
+	          <!-- Durable queue -->
+	          <constructor-arg index="2" value="true"/>
+	          <!-- JNDI bindings, empty list for none -->
+	          <constructor-arg index="3"><list/></constructor-arg>
+	        </bean>
+	      </list>
+	    </constructor-arg>
+	    <!-- Topic configurations -->
+	    <constructor-arg index="2">
+	      <list/>
+	    </constructor-arg>
+	    <constructor-arg value="DefaultDomain" index="3"/>
+	    
+	    
+	  </bean>
+	  	
+	<!--     
+	<bean id="jmsXaConnectionFactory" class="org.springframework.jms.connection.TransactionAwareConnectionFactoryProxy"  depends-on="tradexAmqBroker">		
+		<property name="targetConnectionFactory" ref="xaConnectionFactory" />
+		<property name="synchedLocalTransactionAllowed" value="false"/>
+	</bean>
+	-->
+    
+  	<bean id="hornetQResourceAdapter" class="org.hornetq.ra.HornetQResourceAdapter">
+  		<property name="transactionManagerLocatorClass" value="org.tradex.tx.TransactionHelper" />
+  		<property name="transactionManagerLocatorMethod" value="transactionManager" />
+  		<property name="clientID" value="tradex" />
+  		<property name="HA" value="false" />
+  		<property name="ConnectorClassName" value="org.hornetq.core.remoting.impl.invm.InVMConnector" />
+  		
+	</bean>
+	
+	<bean id="hornetXaConnectionFactory" class="org.jencks.pool.PooledSpringXAConnectionFactory">
+		<property name="connectionFactory" ref="localConnectionFactory" />
+		<property name="transactionManager" ref="jbossTransactionManager" />
+	</bean>
+  	
+
+</beans>
+

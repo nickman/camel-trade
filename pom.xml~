@@ -31,6 +31,8 @@
 		<activemq.version>5.7.0</activemq.version>	
 		<xbean-spring.version>3.9</xbean-spring.version>
 		<jencks.version>2.2</jencks.version>
+		<hornetq.version>2.2.21.Final</hornetq.version>
+		<netty.version>3.2.8.Final</netty.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<dependencyManagement>
@@ -188,10 +190,23 @@
 			</dependency>
 			
 			<dependency>
+			   <groupId>org.apache.activemq</groupId>
+			   <artifactId>activemq-ra</artifactId>
+			   <version>${activemq.version}</version>
+			</dependency>
+			
+			
+			<dependency>
 			  <groupId>org.apache.xbean</groupId>
 			  <artifactId>xbean-spring</artifactId>
 			  <version>${xbean-spring.version}</version>
 			</dependency>
+			
+		  <!--   
+		    =================================================================================
+		    Jencks JCA Dependencies
+		    =================================================================================
+		  -->		
 			
 		      <dependency>
 			<groupId>org.jencks</groupId>
@@ -211,7 +226,42 @@
 			</exclusions>						
 		      </dependency>
 			
-			
+			<!--   
+			  =================================================================================
+			  HornetQ Dependencies
+			  =================================================================================
+			-->
+		    <dependency>
+		      <groupId>org.hornetq</groupId>
+		      <artifactId>hornetq-ra</artifactId>
+		      <version>${hornetq.version}</version>
+		    </dependency>
+		    
+		    <dependency>
+		      <groupId>org.hornetq</groupId>
+		      <artifactId>hornetq-spring-integration</artifactId>
+		      <version>${hornetq.version}</version>
+		    </dependency>
+		    
+		    <dependency>
+		      <groupId>org.hornetq</groupId>
+		      <artifactId>hornetq-jms</artifactId>
+		      <version>${hornetq.version}</version>
+		    </dependency>
+
+		    <dependency>
+		      <groupId>org.hornetq</groupId>
+		      <artifactId>hornetq-jms-client</artifactId>
+		      <version>${hornetq.version}</version>
+		    </dependency>
+		    
+		    <dependency>
+		      <groupId>org.jboss.netty</groupId>
+		      <artifactId>netty</artifactId>
+		      <version>${netty.version}</version>
+		    </dependency>
+
+
 			
 			<!--   
 			  =================================================================================

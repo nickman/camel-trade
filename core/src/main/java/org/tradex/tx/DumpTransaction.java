@@ -26,6 +26,8 @@ package org.tradex.tx;
 
 import javax.transaction.xa.XAResource;
 
+import org.apache.camel.Exchange;
+import org.apache.camel.Processor;
 import org.apache.log4j.Logger;
 
 /**
@@ -36,7 +38,7 @@ import org.apache.log4j.Logger;
  * <p><code>org.tradex.tx.DumpTransaction</code></p>
  */
 
-public class DumpTransaction {
+public class DumpTransaction implements Processor {
 	/** The instance logger */
 	protected static final Logger log = Logger.getLogger(DumpTransaction.class);
 	
@@ -44,7 +46,20 @@ public class DumpTransaction {
 	 * Logs current transaction data
 	 */
 	public static void dumpTx() {
+		dumpTx(null);
+	}
+	/**
+	 * Logs current transaction data
+	 * @param exchange An optional exchange
+	 */
+	public static void dumpTx(Exchange exchange) {
 		StringBuilder b = new StringBuilder("\nTransaction Dump:");
+		if(exchange!=null) {
+			b.append("\n\tExchange ID:").append(exchange.getExchangeId());
+			if(exchange.getFromRouteId()!=null) b.append("\n\tFrom Route:").append(exchange.getFromRouteId());
+		}
+		b.append("\n\tThread:").append(Thread.currentThread().toString());
+		
 		b.append("\n\tTX Status:").append(TransactionHelper.getTransactionState());
 		b.append("\n\tTX UID:").append(TransactionHelper.getTransactionUID());
 		b.append("\n\tXA Resources:");
@@ -54,6 +69,18 @@ public class DumpTransaction {
 		b.append("\n===================");
 		log.info(b);
 	}
+
+	/**
+	 * {@inheritDoc}
+	 * @see org.apache.camel.Processor#process(org.apache.camel.Exchange)
+	 */
+	@Override
+	public void process(Exchange exchange) throws Exception {
+		dumpTx(exchange);
+		
+	}
+	
+	
 	
 	// org.apache.geronimo.transaction.manager.WrapperNamedXAResource
 	// XAResource xaResource
