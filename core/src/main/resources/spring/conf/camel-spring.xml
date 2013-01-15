@@ -45,6 +45,12 @@
 		</property>
 	</bean>
 	
+	<bean id="tradexService" class="org.tradex.jaxws.TradexService" />
+	
+	 
+		<bean id="jsonProvider" class="org.apache.cxf.jaxrs.provider.json.JSONProvider"/>
+	
+	
 	  
 	<bean name="fileImportIdempotentRepositoryFactory" class="org.tradex.camel.idempotent.JmxNamedJdbcMessageIdRepository" scope="prototype" >
 		<property name="objectName" value="org.tradex.idempotent:service=Prototype" />
@@ -80,6 +86,9 @@
 		<camel:errorHandler id="TradeImportErrorHandler" type="DeadLetterChannel" deadLetterUri="direct:handleTradeException" useOriginalMessage="true" >
 			<camel:redeliveryPolicy maximumRedeliveries="0"/>
 		</camel:errorHandler>
+		
+	
+	<camel:endpoint uri="file:${java.io.tmpdir}/tradein/.dlq?fileExist=Append" id="FoobaredFiles" camelContextId="TradeImportExceptionHandler" />
 	
 		
 	<camelContext xmlns="http://camel.apache.org/schema/spring" trace="false" id="TradexContext" autoStartup="true"  >
@@ -158,11 +167,16 @@
 		<route autoStartup="true" id="TradeImportExceptionHandler" handleFault="true">
 			<camel:from id="DirectTradeExceptionHandler" uri="direct:handleTradeException" />
 			<!-- <marshal id="FailedTradeImportMarshaller" ref="TradexCSVFormat" /> -->
-			<camel:to uri="log:test.org.tradex.import.HANDLE.error?level=ERROR&amp;showException=true&amp;showBody=true&amp;showBodyType=true&amp;showHeaders=true&amp;showProperties=true&amp;multiline=true&amp;showStackTrace=false" />
-			<camel:to id="DLQWriter" uri="file:/c:/temp/tradein/.dlq?fileExist=Append" />
+			<camel:to uri="log:test.org.tradex.import.HANDLE.error?level=ERROR&amp;showException=true&amp;showBody=true&amp;showBodyType=true&amp;showHeaders=true&amp;showProperties=true&amp;multiline=true&amp;showStackTrace=true&amp;showAll=true" />
+			<camel:to ref="FoobaredFiles" />
 		</route>
 	
-			
+		<route autoStartup="true" id="TradexWeb">
+		    <from uri="jetty:http://0.0.0.0:8186/?sessionSupport=true&amp;matchOnUriPrefix=true"/>
+			<camel:to uri="log:test.org.tradex.web.HANDLE.request?level=INFO&amp;showException=true&amp;showBody=true&amp;showBodyType=true&amp;showHeaders=true&amp;showProperties=true&amp;multiline=true&amp;showStackTrace=false" />
+			<!-- <to uri="cxf:tradexService?serviceClass=org.tradex.jaxws.TradexService&amp;providers=#jsonProvider"  /> -->
+			<to uri="cxfbean:tradexService?providers=#jsonProvider"  />					    			
+		</route>			
 		
 	</camelContext>
 	
